@@ -1,3 +1,4 @@
+
 ;;; tb-general-setup.el
 ;;; Loads appearance and general-use packages
 
@@ -13,10 +14,33 @@
 
 ;;; Font
 (set-face-attribute 'default nil
-		    :family "Inconsolata" :height 145 :weight 'normal)
+		    :family "Inconsolata for Powerline" :height 145 :weight 'normal)
 
 ;;; Toolbar off
 (tool-bar-mode -1)
+
+;;; Modeline
+(require 'airline-themes)
+(load-theme 'airline-durant t)
+
+;;; If we're running in a terminal, pad the line numbers a little and
+;;; change the themes we're using to match
+(unless window-system
+  (setq nlinum-format "%d ")
+  (load-theme 'airline-raven t))
+
+;;; Terminal: enable mouse usage
+(unless window-system
+  (require 'mouse)
+  (xterm-mouse-mode t)
+  (global-set-key [mouse-4] (lambda ()
+                              (interactive)
+                              (scroll-down 1)))
+  (global-set-key [mouse-5] (lambda ()
+                              (interactive)
+                              (scroll-up 1)))
+  (defun track-mouse(e))
+  (setq mouse-sel-mode t))
 
 ;;; Footer
 (provide 'tb-general-setup)

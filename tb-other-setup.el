@@ -17,7 +17,7 @@
 
 ;; Makefile.am mode
 (add-hook 'makefile-automake-mode-hook (lambda ()
-                                         (setq indent-tabs-mode t)
+                                         (setq-local indent-tabs-mode t)
                                          (nlinum-mode t)))
 
 (provide 'tb-other-setup)
