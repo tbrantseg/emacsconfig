@@ -31,11 +31,13 @@
 
 ;; Setup org agenda
 (setq org-agenda-files (list "~/org/work.org" "~/org/home.org"))
+(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
+(setq org-agenda-file-regexp "\\`[^.].*\\.org\\'\\|[0-9]+")
 (define-key global-map "\C-cl" 'org-store-link)
 (define-key global-map "\C-ca" 'org-agenda)
 (setq org-log-done 'time)
 
-(message "Or-mode setup loaded OK!")
+(message "Org-mode setup loaded OK!")
 
 ;;; Footer
 (provide 'tb-org-setup)

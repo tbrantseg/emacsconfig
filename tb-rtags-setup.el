@@ -25,11 +25,8 @@
 
 (defun regen-compilation-db ()
   (interactive)
-  (with-output-to-temp-buffer "*Compilation Database*"
-    (async-shell-command "make clean && bear make")
-    (pop-to-buffer "*Compilation Database*")
-    (with-current-buffer (get-buffer "*Compilation Database")
-      (compilation-mode))))
+  (setq-local compilation-read-command nil)
+  (compile compdb-command))
   
 (global-set-key (kbd "<f4>") 'regen-compilation-db)
 

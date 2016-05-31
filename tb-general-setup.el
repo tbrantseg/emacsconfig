@@ -13,7 +13,7 @@
 
 ;;; Font
 (set-face-attribute 'default nil
-		    :family "Inconsolata for Powerline" :height 145 :weight 'normal)
+		    :family "Inconsolata for Powerline" :height 140 :weight 'normal)
 
 ;; Prevent font from being too big in x11
 (if (eq window-system 'x)
@@ -24,11 +24,13 @@
 (tool-bar-mode -1)
 
 ;;; Smart mode line
-;(setq sml/no-confirm-load-theme t)
-;(sml/setup)
+;(require 'powerline)
+(setq sml/no-confirm-load-theme t)
+(setq sml/theme 'powerline)
+(sml/setup)
 
-(require 'spaceline-config)
-(spaceline-emacs-theme)
+;(require 'spaceline-config)
+;(spaceline-emacs-theme)
 
 ;;; If we're running in a terminal, pad the line numbers a little and
 ;;; enable mouse usage
