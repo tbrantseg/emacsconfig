@@ -11,6 +11,7 @@
 
 ;; Also add company backend
 (add-hook 'python-mode-hook (lambda ()
+                              (make-local-variable 'company-backends)
                               (add-to-list 'company-backends 'company-anaconda)))
 
 ;; Make sure we can find iPython
@@ -22,6 +23,8 @@
 (setq py-switch-buffers-on-execute-p t)
 (setq py-split-windows-on-execute-p nil)
 (setq py-smart-indentation t)
+
+(message "Python mode setup loaded OK!")
 
 (provide 'tb-python-setup)
 ;;; tb-python-setup.el ends here

@@ -20,5 +20,7 @@
                                          (setq-local indent-tabs-mode t)
                                          (nlinum-mode t)))
 
+(message "Other modes setup loaded OK!")
+
 (provide 'tb-other-setup)
 ;;; tb-other-setup.el ends here

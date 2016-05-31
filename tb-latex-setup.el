@@ -53,5 +53,8 @@
 
 ;; Aastex format citations as default
 (setq reftex-cite-format 'natbib)
+
+(message "LaTeX mode setup loaded OK!")
+
 (provide 'tb-latex-setup)
 ;;; tb-latex-setup.el ends here

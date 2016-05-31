@@ -15,17 +15,25 @@
 (set-face-attribute 'default nil
 		    :family "Inconsolata for Powerline" :height 145 :weight 'normal)
 
+;; Prevent font from being too big in x11
+(if (eq window-system 'x)
+    (set-face-attribute 'default nil :height 120)
+  (scroll-bar-mode -1))
+
 ;;; Toolbar off
 (tool-bar-mode -1)
 
 ;;; Smart mode line
-(setq sml/theme 'automatic)
-(sml/setup)
+;(setq sml/no-confirm-load-theme t)
+;(sml/setup)
+
+(require 'spaceline-config)
+(spaceline-emacs-theme)
 
 ;;; If we're running in a terminal, pad the line numbers a little and
-;;; change the themes we're using to match.
-;;; Also enable mouse usage
+;;; enable mouse usage
 (unless window-system
+  (menu-bar-mode -1)
   (setq nlinum-format "%d ")
   (require 'mouse)
   (xterm-mouse-mode t)
@@ -37,6 +45,8 @@
                               (scroll-up 1)))
   (defun track-mouse(e))
   (setq mouse-sel-mode t))
+
+(message "General setup loaded OK!")
 
 ;;; Footer
 (provide 'tb-general-setup)

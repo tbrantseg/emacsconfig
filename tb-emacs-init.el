@@ -19,7 +19,7 @@
 (require 'tb-other-setup)
 
 ;; Restore desktop
-(desktop-save-mode 1)
+;(desktop-save-mode 1)
 
 ;;; Footer
 (provide 'tb-emacs-init)

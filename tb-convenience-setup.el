@@ -17,7 +17,9 @@
 (sp-with-modes '(c-mode c++-mode)
 	       (sp-local-pair "{" nil :post-handlers '(("||\n[i]" "RET")))
 	       (sp-local-pair "/*" "/*" :post-handlers '((" | " "SPC")
-							 ("* ||\n[i]" "RET"))))
+                                                     ("* ||\n[i]" "RET"))))
+
+(message "Convenience setup loaded OK!")
 
 ;;; Footer
 (provide 'tb-convenience-setup)

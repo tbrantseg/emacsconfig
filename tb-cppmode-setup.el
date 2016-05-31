@@ -28,8 +28,17 @@
 ;; Syntax checking with flycheck
 (add-hook 'c++-mode-hook 'flycheck-mode)
 (add-hook 'c-mode-hook 'flycheck-mode)
+
+;; Syntax and completion tweaks
+(require 'tb-rtags-setup)
 (add-hook 'c++-mode-hook (lambda()
                            (setq flycheck-clang-language-standard "c++11")))
+                           (make-local-variable 'company-backends)
+                           (setq company-backends '(company-rtags company-semantic company-gtags company-keywords))
+                                                     ;(setq company-backends '(company-semantic company-gtags company-keywords))
+ 
+;(add-to-list 'flycheck-clang-include-path "/opt/local/include/")
+;(add-to-list 'flycheck-clang-include-path "/opt/local/include/mpich-clang35/")
 
 ;; Projectile integration
 (define-key c-mode-map (kbd "C-c p f") 'helm-projectile-find-file)
@@ -45,6 +54,8 @@
 ;; Manual completion control
 (define-key c-mode-map [(tab)] 'company-complete)
 (define-key c++-mode-map [(tab)] 'company-complete)
+
+(message "C++ mode setup loaded OK!")
 
 ;;; Footer
 (provide 'tb-cppmode-setup)
