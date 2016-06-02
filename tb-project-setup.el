@@ -25,6 +25,9 @@
 (helm-projectile-on)
 (global-set-key [f8] 'sr-speedbar-toggle)
 
+;; Add magit-status keybind
+(global-set-key (kbd "C-c g") 'magit-status)
+
 (message "Projectile/semantic setup loaded OK!")
 
 ;;; Footer

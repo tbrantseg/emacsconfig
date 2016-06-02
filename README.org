@@ -10,7 +10,8 @@ Still to add: Ensuring all necessary packages are loaded.
 
 ** Keybinds added
 *** Global
-|M-f10| Show/hide line numbers|
+| M-f10 | Show/hide line numbers |
+| C-c g | magit status display   |
 
 *** C/C++ mode
 | f4 | Regenerate compilation database                |
