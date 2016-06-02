@@ -2,7 +2,6 @@
 ;; Setup for latex mode
 
 ;; Useful mode hooks
-(add-hook 'LaTeX-mode-hook 'nlinum-mode)
 (add-hook 'LaTeX-mode-hook 'visual-line-mode)
 (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
 
@@ -36,6 +35,7 @@
       TeX-auto-save t
       TeX-newline-function 'reindent-then-newline-and-indent
       TeX-parse-self t)
+(setq reftex-default-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
 
 ;; Make latexmk the default compilation option
 (add-hook 'LaTeX-mode-hook (lambda ()
@@ -49,7 +49,6 @@
 (setq TeX-view-program-selection '((output-pdf "PDF Viewer")))
 (setq TeX-view-program-list
      '(("PDF Viewer" "/Applications/Skim.app/Contents/SharedSupport/displayline -b -g %n %o %b")))
-(server-start)
 
 ;; Aastex format citations as default
 (setq reftex-cite-format 'natbib)

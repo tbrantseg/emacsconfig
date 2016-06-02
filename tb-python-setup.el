@@ -2,10 +2,8 @@
 ;; Main file for everything related to python mode.
 
 ;; Mode hooks
-;; Nlinum mode for line numbers
 ;; Anaconda mode for general python goodness
 ;; Flycheck mode for syntax checking
-(add-hook 'python-mode-hook 'nlinum-mode)
 (add-hook 'python-mode-hook 'anaconda-mode)
 (add-hook 'python-mode-hook 'flycheck-mode)
 

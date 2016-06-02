@@ -26,7 +26,7 @@
 ;;; Smart mode line
 ;(require 'powerline)
 (setq sml/no-confirm-load-theme t)
-(setq sml/theme 'powerline)
+(setq sml/theme 'respectful)
 (sml/setup)
 
 ;(require 'spaceline-config)

@@ -15,8 +15,12 @@
 (require 'tb-sql-setup)
 (require 'tb-python-setup)
 (require 'tb-latex-setup)
-(require 'tb-org-setup)
 (require 'tb-other-setup)
+(require 'tb-org-setup)
+
+;; Line number mode
+;; The idle timer is necessary due to a bug in Emacs 24.5
+(require 'tb-linum-setup)
 
 ;; Restore desktop
 ;(desktop-save-mode 1)

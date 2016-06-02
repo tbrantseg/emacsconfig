@@ -5,7 +5,6 @@
              '("\\.psql$" . (lambda ()
                               (sql-mode))))
 
-(add-hook 'sql-mode-hook 'nlinum-mode)
 (add-hook 'sql-mode-hook 'sql-highlight-postgres-keywords)
 (add-hook 'sql-mode-hook 'sqlup-mode)
 

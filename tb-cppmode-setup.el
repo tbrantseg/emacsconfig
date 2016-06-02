@@ -1,9 +1,6 @@
 ;;; tb-cppmode-setup
 ;;; All C++ mode tweaks here.
 
-;; Display line numbers in this mode
-(add-hook 'c++-mode-hook 'nlinum-mode)
-
 ;; Style and appearance tweaks
 ;; Automatic indentation, non-tabbed indenting, good style
 (setq c-default-style "stroustrup")
@@ -34,11 +31,7 @@
 (add-hook 'c++-mode-hook (lambda()
                            (setq flycheck-clang-language-standard "c++11")))
                            (make-local-variable 'company-backends)
-                           (setq company-backends '(company-rtags company-semantic company-gtags company-keywords))
-                                                     ;(setq company-backends '(company-semantic company-gtags company-keywords))
- 
-;(add-to-list 'flycheck-clang-include-path "/opt/local/include/")
-;(add-to-list 'flycheck-clang-include-path "/opt/local/include/mpich-clang35/")
+                           (setq company-backends '(company-rtags company-semantic company-gtags company-keywords))                                                     
 
 ;; Projectile integration
 (define-key c-mode-map (kbd "C-c p f") 'helm-projectile-find-file)
