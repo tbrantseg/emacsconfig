@@ -10,8 +10,8 @@
 (defun org-mode-reftex-setup ()
   (load-library "reftex") 
   (and (buffer-file-name)
-  (file-exists-p (buffer-file-name))
-  (reftex-parse-all))
+       (file-exists-p (buffer-file-name))
+       (reftex-parse-all))
   (define-key org-mode-map (kbd "C-c (") 'reftex-citation)
   ;; (setq reftex-cite-format
   ;;     '(
@@ -24,7 +24,7 @@
   ;;       (?x . "%l")
   ;;       (?X . "{%l}")
   ;;       )))
-)
+  )
 
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (add-hook 'org-mode-hook 'org-mode-reftex-setup)
@@ -46,10 +46,11 @@
 ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
 
 (defun org-ref-setup ()
-(setq org-ref-default-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
-(setq org-ref-pdf-directory "~/Documents/Papers")
-(setq bibtex-completion-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
-(require 'org-ref))
+  (setq org-ref-default-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
+  (setq org-ref-pdf-directory "~/Documents/Papers")
+  (setq bibtex-completion-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
+  (require 'org-ref)
+  (visual-line-mode))
 (add-hook 'org-mode-hook 'org-ref-setup)
 
 ;; Setup org agenda

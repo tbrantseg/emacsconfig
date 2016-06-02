@@ -1,6 +1,0 @@
-Add these two lines to your .emacs
-
-(add-to-list 'load-path "path/to/emacs-init")
-(require 'tb-emacs-init)
-
-- TO DO: Add package checking
