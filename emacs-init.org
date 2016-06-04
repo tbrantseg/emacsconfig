@@ -5,7 +5,17 @@
 ** Introduction
 We, the people...wait, wrong preamble. This is my attempt to produce a literate, structured emacs init file. This seems easier to maintain and easier to use than both a traditional monolithic =.emacs= file and a modular config - easier navigation, easier debugging, and easier maintaining.
 
-** Summary
+** Useful references
+There are a lot of useful references out there for maintaining and expanding this configuration
+- There are quite a few literate configs out there that I've heavily referenced while making this; I'm putting links to them here so I can find them again later:
+  - Sriram Krishnaswamy's giant config: http://sriramkswamy.github.io/dotemacs/
+  - Sacha Chua's nice emacs config: http://pages.sachachua.com/.emacs.d/Sacha.html
+  - Angry Bacon's config, which has nice use of =use-package=: https://github.com/angrybacon/dotemacs/blob/master/dotemacs.org
+  - Trevoke's config: https://github.com/Trevoke/.emacs.d/blob/master/aldric.org
+- Of course, for any of this it's nice to reference /An Introduction to Programming in Emacs Lisp/, which I really need to get around to going through completely at some point: https://www.gnu.org/software/emacs/manual/html_node/eintr/
+- A lot of this (particularly the C++ and Helm sections) is also taken from Tuhdo's C/C++ IDE guide (http://tuhdo.github.io/c-ide.html), Helm guide (http://tuhdo.github.io/helm-intro.html), and Projectile guide (http://tuhdo.github.io/helm-projectile.html).
+
+** Keybind Summary
 Keybindings defined in this configuration:
 | Key   | Function                                      | Mode         |
 |-------+-----------------------------------------------+--------------|
@@ -18,6 +28,32 @@ Keybindings defined in this configuration:
 | f8    | Toggle projectile speedbar                    | C/C++        |
 
 * Bootstrapping
+This section is intended to get you up and running.
+
+** Installation
+*** Installing Emacs
+This config has been tested to work with Emacs 24 (MacPorts and Emacs.app), the Emacs 24 =emacs-mac-app=, and Emacs 25.0 and 25.1. Pick your poison:
+- I believe the vanilla build from MacPorts has a few differences from the main source line, but I'm not sure what they are. To get vanilla Emacs from MacPorts, type
+#+BEGIN_SRC sh :tangle no
+  sudo port -v install emacs-app
+#+END_SRC
+- To get vanilla Emacs from [[http://www.emacsformacosx.com][Emacs For Mac OS X]], just click the big download button. They also have pretest and nightly builds available.
+- I've been using the master branch (25.1) of the main Emacs git repo at [[https://github.com/emacs-mirror/emacs]]. To build this, clone the git repo with 
+#+BEGIN_SRC sh :tangle no
+  git clone https://github.com/emacs/mirror/emacs.git
+#+END_SRC
+
+then change to the =emacs= directory and run
+#+BEGIN_SRC sh :tangle no
+  ./autogen.sh
+  ./configure --with-ns
+  make
+  make install
+#+END_SRC
+
+to build. The final product should be in =emacs/nextstep/Emacs.app=, which you can just move to your Applications folder.
+
+*** Init files (this repo)
 This section contains bootstrapping code for generating the actual =emacs-init.el= file that =.emacs= will load.
 
 To begin with, add this code to your =.emacs=.
@@ -131,8 +167,14 @@ There are times when it's handy to open a quick emacs session in a terminal, for
     (setq mouse-sel-mode t))
 #+END_SRC
 
-With that, we're through the general setup. Up next, Helm.
+** Customize
+Customize, as well as things like designating safe themes and local variables, can result in emacs adding code in your configuration files. Normally this goes in =.emacs=, but I like to separate this out into its own file to keep all of the automatically generated code in a separate file.
 
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file (expand-file-name "customize.el" user-emacs-directory))
+  (when (file-exists-p custom-file)
+    (load custom-file))
+#+END_SRC
 ** Server
 I like having the server running for quick stuff in =emacsclient=, so let's get that going unless it's already running.
 #+BEGIN_SRC emacs-lisp  
@@ -163,6 +205,8 @@ Also add a keybind for toggling line numbers as needed.
 (global-set-key (kbd "<M-f10>") 'nlinum-mode)
 #+END_SRC
 ** Other global keybinds
+With that, we're through the general setup. Up next, Helm.
+
 * Helm setup
 Helm is fantastic and really should just be a core part of emacs. It provides fuzzy matching and quick completion and navigation for just about anything, and is a massive time saver, earning back the amount of time I've spent tinkering back with this config. Maybe.
 
