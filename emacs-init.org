@@ -1,0 +1,681 @@
+#+AUTHOR: Tom Brantseg
+#+PROPERTY: header-args :tangle yes
+
+* About
+** Introduction
+We, the people...wait, wrong preamble. This is my attempt to produce a literate, structured emacs init file. This seems easier to maintain and easier to use than both a traditional monolithic =.emacs= file and a modular config - easier navigation, easier debugging, and easier maintaining.
+
+** Summary
+Keybindings defined in this configuration:
+| Key   | Function                                      | Mode         |
+|-------+-----------------------------------------------+--------------|
+| M-f10 | Show or hide line numbers in current file     | Global       |
+| C-c g | magit status for current project              | Any git repo |
+| f4    | Regenerate compilation database for rtags     | C/C++        |
+| f5    | Compile project                               | C/C++        |
+| f6    | Switch between header/implementation files    | C/C++        |
+| f7    | Display header/implementation in other window | C/C++        |
+| f8    | Toggle projectile speedbar                    | C/C++        |
+
+* Bootstrapping
+This section contains bootstrapping code for generating the actual =emacs-init.el= file that =.emacs= will load.
+
+To begin with, add this code to your =.emacs=.
+#+BEGIN_SRC emacs-lisp :tangle no
+  (add-to-list 'load-path "~/emacs-init")
+  (require 'emacs-init)
+#+END_SRC
+
+The =emacs-init.el= file included with this file contains the following code:
+#+BEGIN_SRC emacs-lisp :tangle no
+  ;; emacs-init.el
+  ;; This file replaces itself with the contents of emacs-init.org when first run.
+
+  (require 'org)
+  (find-file "~/emacs-init/emacs-init.org")
+  (org-babel-tangle)
+  (load-file "~/emacs-init/emacs-init.el")
+  (byte-compile-file "~/emacs-init/emacs-init.el")
+
+  ;; emacs-init.el ends here
+#+END_SRC
+
+On first run, =emacs-init.el= will thus tangle this file and replace itself with a new =emacs-init.el= generated from this file (=emacs-init.org=).
+
+This file contains a bit of file-local code at the end, namely:
+#+BEGIN_SRC emacs-lisp :tangle no
+  (add-hook 'after-save-hook (lambda ()
+                               (org-babel-tangle)
+                               (byte-compile-file "~/emacs-init/emacs-init.el"))
+            nil t)
+#+END_SRC
+
+This lambda function will cause this file to regenerate and byte-compile the file =emacs-init.el= every time you save this file, ensuring that any changes are automatically ready to go next time you start Emacs. Handy!
+
+** TODO Add method for checking that all packages are installed.
+
+* General-purpose code
+This section contains code to set up the package manager and the general look and feel of the system.
+
+** Name and email
+My default name isn't ever quite right, so we'll just make sure it's set correctly.
+#+BEGIN_SRC emacs-lisp
+  (setq user-full-name "Tom Brantseg")
+  (setq user-mail-address "tbrantse@iastate.edu")
+#+END_SRC
+
+** Error handling
+If there's an error in here, we want to know about it and fix it ASAP.
+#+BEGIN_SRC emacs-lisp
+  (setq debug-on-error t)
+#+END_SRC
+** Package management
+I am not sure if having three package management archives is a good idea. It probably isn't, but untangling that mess that I have probably made is beyond my patience at the moment, so here we are.
+#+BEGIN_SRC emacs-lisp
+  (require 'package)
+  (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+                            ("marmalade" . "http://marmalade-repo.org/packages/")
+                            ("melpa" . "http://melpa.milkbox.net/packages/")))
+  (package-initialize)
+#+END_SRC
+
+** Theme
+I change preferred themes all the time: =lush=, =alect-black-alt=, =distinguished=, and =manoj-dark= are ones I keep coming back to, but I'm always on the lookout for a new one.
+#+BEGIN_SRC emacs-lisp
+  (load-theme 'lush t)
+#+END_SRC
+
+** Font
+[[http://www.google.com/fonts/specimen/Inconsolata][Inconsolata]] is great. For some reason 14 point works the best...I would think 12-point is standard, but that always appears as super microscopic in most cases.
+#+BEGIN_SRC emacs-lisp  
+  (set-face-attribute 'default nil
+              :family "Inconsolata for Powerline" :height 140 :weight 'normal)
+#+END_SRC 
+
+However, in X11 (if we're running that for some reason) 14-point font is absolutely gigantic, and those awful X11 scroll bars eat up even more space. Thus we have to have some special code to make X11 displays look nice, or at least tolerable.
+#+BEGIN_SRC emacs-lisp  
+  (if (eq window-system 'x)
+      (set-face-attribute 'default nil :height 120)
+    (scroll-bar-mode -1))
+#+END_SRC
+
+** Toolbar
+The toolbar is useful for about the first ten minutes of using emacs, but after that you just want the screen real estate back, especially on my tiny laptop.
+#+BEGIN_SRC emacs-lisp  
+  (tool-bar-mode -1)
+#+END_SRC
+
+** Mode line
+This is still a work in progress. I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line=. =smart-mode-line= is great but seems to have some weird annoying errors, but I think I'm close to getting it working.
+#+BEGIN_SRC emacs-lisp  
+  (setq sml/theme 'dark)
+  (setq sml/no-confirm-load-theme t)
+  (sml/setup)
+#+END_SRC
+
+** Terminal appearance
+There are times when it's handy to open a quick emacs session in a terminal, for whatever reason. However, there are a few different display things - the line numbers tend to display right up against text, which is hard to read, and I am so used to using the trackpad to scroll that it always throws me off. We also can get rid of the menu bar, since accessing it in the terminal is a huge pain.
+#+BEGIN_SRC emacs-lisp  
+  (unless window-system
+    (menu-bar-mode -1)
+    (setq nlinum-format "%d ")
+    (require 'mouse)
+    (xterm-mouse-mode t)
+    (global-set-key [mouse-4] (lambda ()
+                                (interactive)
+                                (scroll-down 1)))
+    (global-set-key [mouse-5] (lambda ()
+                                (interactive)
+                                (scroll-up 1)))
+    (defun track-mouse(e))
+    (setq mouse-sel-mode t))
+#+END_SRC
+
+With that, we're through the general setup. Up next, Helm.
+
+** Server
+I like having the server running for quick stuff in =emacsclient=, so let's get that going unless it's already running.
+#+BEGIN_SRC emacs-lisp  
+  (require 'server)
+  (unless (server-running-p) (server-start))
+#+END_SRC
+** Mac-specific
+I also am completely used to using the command key as meta, so let's bow to the inevitable on that.
+#+BEGIN_SRC emacs-lisp  
+  (setq mac-command-modifier 'meta)
+#+END_SRC
+** Line numbers
+Add line numbers to all of the modes that are likely to need them.
+#+BEGIN_SRC emacs-lisp  
+  (add-hook 'c++-mode-hook 'nlinum-mode)
+  (add-hook 'sql-mode-hook 'nlinum-mode)
+  (add-hook 'python-mode-hook 'nlinum-mode)
+  (add-hook 'LaTeX-mode-hook 'nlinum-mode)
+  (add-hook 'sh-mode-hook 'nlinum-mode)
+  (add-hook 'emacs-lisp-mode-hook 'nlinum-mode)
+  (add-hook 'autoconf-mode-hook 'nlinum-mode)
+  (add-hook 'makefile-mode-hook 'nlinum-mode)
+  (add-hook 'makefile-automake-mode-hook 'nlinum-mode)
+#+END_SRC
+
+Also add a keybind for toggling line numbers as needed.
+#+BEGIN_SRC emacs-lisp  
+(global-set-key (kbd "<M-f10>") 'nlinum-mode)
+#+END_SRC
+** Other global keybinds
+* Helm setup
+Helm is fantastic and really should just be a core part of emacs. It provides fuzzy matching and quick completion and navigation for just about anything, and is a massive time saver, earning back the amount of time I've spent tinkering back with this config. Maybe.
+
+** Basic loading
+First, of course, we've got to load the thing.
+#+BEGIN_SRC emacs-lisp  
+  (require 'helm)
+  (require 'helm-config)
+#+END_SRC
+
+** Keybinds
+The default helm keybinds are...honestly, I don't know. I set it up from [[http://tuhdo.github.io/helm-intro.html][tuhdo's helm tutorial]] a while ago, and I've used these keybinds since day one.
+
+First up, the helm command prefix. The guide sensibly recommended changing it from =C-x c=, since that is way too close to =C-x C-c= when you're working quickly.
+#+BEGIN_SRC emacs-lisp  
+  (global-set-key (kbd "C-c h") 'helm-command-prefix)
+  (global-unset-key (kbd "C-x c"))
+#+END_SRC
+
+I don't even remember the defaults for these actions, but I'm so used to the remapped keys now I don't want to think about changing them.
+#+BEGIN_SRC emacs-lisp  
+  (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+  (define-key helm-map (kbd "C-z") 'helm-select-action)
+#+END_SRC
+
+Next, once we've got helm, there is no reason ever to use the standard =M-x= functionality again, so we may as well remap it to call =helm-M-x= directly.
+#+BEGIN_SRC emacs-lisp  
+  (global-set-key (kbd "M-x") 'helm-M-x)
+#+END_SRC
+
+The same goes for basic actions like opening files, switching buffers, and using the kill-ring, so we'll switch things over to the helm functionality for those items as well.
+#+BEGIN_SRC emacs-lisp  
+  (global-set-key (kbd "C-x b") 'helm-mini)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
+#+END_SRC
+
+** Behaviors
+I don't remember what a lot of this does, but the behaviors it controls are, again, ingrained, so we sure aren't taking it out now.
+#+BEGIN_SRC emacs-lisp  
+  (when (executable-find "curl")
+    (setq helm-google-suggest-use-curl-p t))
+
+  (setq helm-split-window-in-side-p        t
+        helm-move-to-line-cycle-in-source      t
+        helm-ff-search-library-in-sexp         t
+        helm-scroll-amount                         8
+        helm-ff-file-name-history-use-recentf  t)
+  (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
+#+END_SRC
+
+I *do* remember what this next block does: use fuzzy matching for finding buffers and commands to complete. Really helpful when you can't remember the exact name of what you're looking for.
+#+BEGIN_SRC emacs-lisp  
+  (setq helm-M-x-fuzzy-match t)
+  (setq helm-buffers-fuzzy-matching    t
+        helm-recentf-fuzzy-match       t)
+#+END_SRC
+
+Finally, we want to keep the helm popup window at a pretty small size, lest it get too distracting.
+#+BEGIN_SRC emacs-lisp  
+  (helm-autoresize-mode t)
+#+END_SRC
+
+** Helm GTAGS integration
+GTAGS is fairly useful, but helm makes it absolutely invaluable for navigating a large project, particularly in finding function or class definitions buried several levels deep.
+
+First, we want to set it up for the modes where large projects tend to come up.
+#+BEGIN_SRC emacs-lisp  
+  (require 'helm-gtags)
+  (add-hook 'dired-mode-hook 'helm-gtags-mode)
+  (add-hook 'eshell-mode-hook 'helm-gtags-mode)
+  (add-hook 'c-mode-hook 'helm-gtags-mode)
+  (add-hook 'c++-mode-hook 'helm-gtags-mode)
+  (add-hook 'asm-mode-hook 'helm-gtags-mode)
+#+END_SRC
+
+Next, just to make it that much easier to guess what you're looking for, some more variable tweaking.
+#+BEGIN_SRC emacs-lisp  
+  (setq helm-gtags-ignore-case t
+        helm-gtags-auto-update t
+        helm-gtags-use-input-at-cursor t
+        helm-gtags-pulse-at-cursor t
+        helm-gtags-prefix-key "\C-cg"
+        helm-gtags-suggested-key-mapping t)
+#+END_SRC
+
+Finally, the project navigation keyboard shortcuts. These are insanely useful and I can't think of going back to being without them now.
+#+BEGIN_SRC emacs-lisp  
+  (define-key helm-gtags-mode-map (kbd "C-c g a") 'helm-gtags-tags-in-this-function)
+  (define-key helm-gtags-mode-map (kbd "C-j") 'helm-gtags-select)
+  (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-dwim)
+  (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-pop-stack)
+  (define-key helm-gtags-mode-map (kbd "C-c <") 'helm-gtags-previous-history)
+  (define-key helm-gtags-mode-map (kbd "C-c >") 'helm-gtags-next-history)
+#+END_SRC
+
+* Project handling setup
+This section is for code dealing with project-level management packages: projectile, semantic, and magit.
+** CEDET
+I still don't know if I like CEDET. I like the *idea* of CEDET, but it's never quite entirely worked right. In any case, it does provide some useful functions, even if it never seems to work in the way it's supposed to.
+
+First we have to go through the usual round of =(require)=s:
+#+BEGIN_SRC emacs-lisp  
+  (require 'cc-mode)
+  (require 'semantic)
+  (require 'semantic/ia)
+  (require 'semantic/bovine/gcc)
+#+END_SRC
+
+We want to use EDE and the semantic DB everywhere possible. The code summaries and sticky function tags are really nice, so we'll enable those too.
+#+BEGIN_SRC emacs-lisp  
+  (semantic-mode 1)
+  (global-ede-mode 1)
+  (global-semanticdb-minor-mode 1)
+  (global-semantic-idle-scheduler-mode 1)
+  (global-semantic-idle-summary-mode)
+  (add-to-list 'semantic-default-submodes 'global-semantic-stickyfunc-mode)
+#+END_SRC
+
+Finally, we have to let it know where Boost and MPI headers are. This still doesn't seem to work right, though.
+#+BEGIN_SRC emacs-lisp  
+  (semantic-add-system-include "/opt/local/include" 'c++-mode)
+  (semantic-add-system-include "/opt/local/include/mpich-clang35" 'c++-mode)
+#+END_SRC
+
+** Projectile
+Projectile is utterly fantastic and is an indispensable tool for any project of more than one file. There's not a lot of customization here, since projectile is great right out of the box. Mainly what we're doing here is integrating helm and sr-speedbar with projectile to make sure we gain the advantages of these packages as well.
+#+BEGIN_SRC emacs-lisp  
+  (require 'projectile)
+  (projectile-global-mode)
+  (require 'projectile-speedbar)
+  (setq projectile-completion-system 'helm)
+  (helm-projectile-on)
+  (global-set-key [f8] 'sr-speedbar-toggle)
+#+END_SRC
+
+** Magit
+Precisely what we said above about Projectile. Magit is almost perfect out of the box, so the only line here is binding a key to =magit-status=.
+#+BEGIN_SRC emacs-lisp  
+  (global-set-key (kbd "C-c g") 'magit-status)
+#+END_SRC
+
+* Useful global modes setup
+There are a few other miscellaneous modes I want to set up before we get into the nitty-gritty of individual modes.
+
+** Company
+Company is, as far as I can tell, the best autocompletion system out there. But most of the customization happens at the mode level, not globally (and for a lot of modes the default list of backends is fine), so this section is only to turn it on.
+#+BEGIN_SRC emacs-lisp  
+  (require 'company)
+  (add-hook 'after-init-hook 'global-company-mode)
+#+END_SRC
+
+** YASnippet
+Again, an indispensable package. But the configuration happens mainly in loading custom snippets, since the default behaviors are just fine. I'll probably include some custom snippet loading stuff here eventually.
+#+BEGIN_SRC emacs-lisp  
+(require 'yasnippet)
+(yas-global-mode 1)
+#+END_SRC
+
+** Smartparens
+Although it's occasionally annoying (how *do* you move out of a new parentheses pair without pressing an arrow key?) I think it's probably telling that every time I've turned this off I've wound up forgetting delimiters everywhere, so I'm stuck with it.
+#+BEGIN_SRC emacs-lisp  
+  (require 'smartparens-config)
+  (show-smartparens-global-mode +1)
+  (smartparens-global-mode 1)
+#+END_SRC
+
+And, breaking my rule about mode-specific configuration coming later, here's some special setup for C/C++ mode, adding C-style comments and curly braces to the list of delimiters.
+#+BEGIN_SRC emacs-lisp  
+  (sp-with-modes '(c-mode c++-mode)
+             (sp-local-pair "{" nil :post-handlers '(("||\n[i]" "RET")))
+             (sp-local-pair "/*" "/*" :post-handlers '((" | " "SPC")
+                                                       ("* ||\n[i]" "RET"))))
+#+END_SRC
+
+* C++ mode setup
+** Style
+I am, I suppose, picky about the appearance of C++ code. At the very least: tabs are bad, sloppy indentation is bad, overly narrow indents are bad, and [[http://www.stroustrup.com/bs_faq2.html][Stroustrup style]] appears to be the style that corresponds to my natural inclination for how code should look. But hey! We can do all that in a couple lines, so let's do that right now.
+#+BEGIN_SRC emacs-lisp  
+  (setq c-default-style "stroustrup")
+  (global-set-key (kbd "RET") 'newline-and-indent)
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 4)
+#+END_SRC
+
+I also, for some reason. really prefer to call header files =.h=, not =.hpp= or =.hxx=. But emacs opens these in C mode by default, not C++ mode, so we'll fix that:
+#+BEGIN_SRC emacs-lisp  
+  (setq auto-mode-alist(cons '("\\.h$"   . c++-mode)  auto-mode-alist))
+#+END_SRC
+
+** Keybinds
+More keybinds. We'll set up keybinds for using projectile to find an arbitrary file (=C-c p f=), switch a buffer between header and implementation (=f6=), and open the header for an implementation, or vice versa, in another window (=f7=). We'll also force company to complete with tab, since that is often something that is nice to trigger quickly when typing out a long function name.
+#+BEGIN_SRC emacs-lisp  
+  (define-key c++-mode-map [f6] 'projectile-find-other-file)
+  (define-key c++-mode-map [f7] 'projectile-find-other-file-other-window)
+  (define-key c-mode-map [(tab)] 'company-complete)
+  (define-key c++-mode-map [(tab)] 'company-complete)
+#+END_SRC
+
+I also like to bind compile to =f5=, which seems to be standard practice for some reason. Personally, I have a custom compile command for each project that is set in =.dir-locals.el= at the project root, and I almost never want to type in a custom command, so I set =compile-command= as a directory variable and prevent compile from asking for a separate command. I also like to have the output scroll so I can glance over and quickly see if everything's going okay.
+#+BEGIN_SRC emacs-lisp  
+  (global-set-key (kbd "<f5>") (lambda ()
+                     (interactive)
+                     (setq-local compilation-read-command nil)
+                     (call-interactively 'compile)))
+  (setq compilation-scroll-output 1)
+#+END_SRC
+
+** Debugger
+I am not sure if I've ever used GDB within emacs, since I recall it usually doesn't really work right. Still, in case I ever give it another spin, here's some code to make it more IDE-like.
+#+BEGIN_SRC emacs-lisp  
+  (setq gdb-many-windows t
+        gdb-show-main t)
+#+END_SRC
+
+** Syntax checking
+Flycheck mode is great for catching stupid syntax errors that would otherwise waste compile time.
+#+BEGIN_SRC emacs-lisp  
+(add-hook 'c++-mode-hook 'flycheck-mode)
+(add-hook 'c-mode-hook 'flycheck-mode)
+#+END_SRC
+
+** RTags setup
+I'm still a little on the fence about RTags - it's a pain in the ass to set up, and it doesn't quite fit into the normal emacs ecosystem. But none of the other options have ever really worked satisfactorily, so it sort of falls into that "worst option except for all the others" category. With that out of the way, here we go.
+
+First things first, since the RTags server and some of the elisp code is from a separate github repo, we want to make sure we can find it while starting up.
+#+BEGIN_SRC emacs-lisp  
+  (add-to-list 'load-path "/soft/src/rtags/src")
+  (setq rtags-path "/soft/src/rtags/bin")
+  (require 'rtags)
+  (require 'company-rtags)
+#+END_SRC
+
+We also want to make sure we can actually use rtags for completion in a file. The line about company-backends is redundant, but I don't particularly care at the moment.
+#+BEGIN_SRC emacs-lisp  
+  (setq rtags-completions-enabled t)
+  (eval-after-load 'company
+    '(add-to-list
+      'company-backends 'company-rtags))
+  (setq rtags-autostart-diagnostics t)
+  (rtags-enable-standard-keybindings)
+  (setq rtags-use-helm t)
+#+END_SRC
+
+Finally, let's start the server, but make sure only one instance is running. I think in older versions this had to be done manually in a terminal (ick) but thankfully it's done entirely internally now.
+#+BEGIN_SRC emacs-lisp  
+  (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
+#+END_SRC
+
+** Rtags for syntax checking
+RTags also provides a better syntax checker than the built-in flycheck engine - for instance, it does a way better job finding things like boost headers and MPI headers, so we'll switch flycheck over to use it.
+#+BEGIN_SRC emacs-lisp  
+  (require 'flycheck-rtags)
+  (defun my-flycheck-rtags-setup ()
+    (flycheck-select-checker 'rtags)
+    (setq-local flycheck-highlighting-mode nil)
+    (setq-local flycheck-check-syntax-automatically nil))
+  (add-hook 'c-mode-common-hook #'my-flycheck-rtags-setup)
+#+END_SRC
+
+** RTags for autocompletion
+Finally, we'll plug RTags into company.
+#+BEGIN_SRC emacs-lisp  
+  (add-hook 'c++-mode-hook (lambda()
+                             (setq flycheck-clang-language-standard "c++11")))
+                             (make-local-variable 'company-backends)
+                             (setq company-backends '(company-rtags company-semantic company-gtags company-keywords))     
+#+END_SRC
+
+There's one last bugbear though. RTags requires a =compile_commands.json= file to use for finding completions - a database of the compilation commands used for each file. This is generated automatically with CMake, but as I use Autotools, you've got to be a bit tricky. Thankfully, [[https://github.com/rizsotto/Bear][Bear]] intercepts compiler calls from a standard makefile to generate this file for Autotools-based projects. The trick is calling it only when you want. The solution I wound up hitting on was defining a local variable called =compdb-command= in the project =.dir-locals.el= which contains an absolute path to a script that runs =cd (project root) && make clean && bear make= to regenerate the compilation DB. Ideally, this keybind should generate the script if it doesn't exist, but one thing at a time.
+#+BEGIN_SRC emacs-lisp  
+(defun regen-compilation-db ()
+  (interactive)
+  (setq-local compilation-read-command nil)
+  (compile compdb-command))
+  
+(global-set-key (kbd "<f4>") 'regen-compilation-db)
+#+END_SRC
+
+* PSQL mode setup
+Very few tweaks here. We just want to make sure that PostgreSQL-specific keywords are highlighted and (being a style stickler) that SQL keywords are automatically put in upper case.
+#+BEGIN_SRC emacs-lisp  
+  (add-to-list 'auto-mode-alist
+               '("\\.psql$" . (lambda ()
+                                (sql-mode))))
+
+  (add-hook 'sql-mode-hook 'sql-highlight-postgres-keywords)
+  (add-hook 'sql-mode-hook 'sqlup-mode)
+#+END_SRC
+* Python mode setup
+For how much I use Python, you'd think there would be more tweaks in here, but the default Python behavior is pretty good.
+
+** Anaconda
+I don't know precisely what Anaconda does, but it seems to provide some pretty great functionality, so let's make sure we have it on all the time. Flycheck also works with it to do Python syntax checking, which is a lifesaver.
+#+BEGIN_SRC emacs-lisp  
+  (add-hook 'python-mode-hook 'anaconda-mode)
+  (add-hook 'python-mode-hook 'flycheck-mode)
+#+END_SRC
+
+We also want to use =company-anaconda= for python completion - it provides excellent context-sensitive completion and documentation for candidates.
+#+BEGIN_SRC emacs-lisp  
+(add-hook 'python-mode-hook (lambda ()
+                              (make-local-variable 'company-backends)
+                              (add-to-list 'company-backends 'company-anaconda)))
+#+END_SRC
+
+** IPython
+IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
+ #+BEGIN_SRC emacs-lisp  
+   (setq-default py-shell-name "/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin//ipython")
+   (setq-default py-which-bufname "IPython")
+   (setq python-shell-interpreter "ipython")
+ #+END_SRC
+
+** Miscellaneous Python behaviors
+Mainly stuff with switching to execute buffers when we run a bit of code in the interpreter. Also smart indentation for now, although I haven't actually decided if I like it yet.
+#+BEGIN_SRC emacs-lisp  
+  (setq py-force-py-shell-name-p t)
+  (setq py-shell-switch-buffers-on-execute-p t)
+  (setq py-switch-buffers-on-execute-p t)
+  (setq py-split-windows-on-execute-p nil)
+  (setq py-smart-indentation t)
+#+END_SRC
+* LaTeX mode setup
+** Mode hooks
+Obviously, we want to use visual-line-mode, because you'd have to be a nut to hit return every 80 characters in the middle of a TeX paragraph. Math mode and outline modes are also a must.
+#+BEGIN_SRC emacs-lisp  
+  (add-hook 'LaTeX-mode-hook 'visual-line-mode)
+  (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+  (defun turn-on-outline-minor-mode()
+    (outline-minor-mode 1))
+
+  (add-hook 'LaTeX-mode-hook 'turn-on-outline-minor-mode)
+  (setq outline-minor-mode-prefix "\C-c \C-o")
+#+END_SRC
+
+We also want to use =latexmk= by default, because there is absolutely no reason not to. Running one command instead of four is pretty cool in my book. Note that the hook for adding =latexmk= to the command list really doesn't seem to work well and should be redone.
+#+BEGIN_SRC emacs-lisp  
+(add-hook 'LaTeX-mode-hook (lambda ()
+  (push
+    '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+      :help "Run latexmk on file")
+    TeX-command-list)))
+(add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk")))
+#+END_SRC
+
+** RefTeX setup
+RefTex provides a great citation framework, so let's make sure we use it all the time.
+#+BEGIN_SRC emacs-lisp  
+  (setq reftex-plug-into-AUCTeX t)
+  (require 'tex-site)
+  (autoload 'reftex-mode "reftex" "RefTeX Minor Mode" t)
+  (autoload 'turn-on-reftex "reftex" "RefTeX Minor Mode" nil)
+  (autoload 'reftex-citation "reftex-cite" "Make citation" nil)
+  (autoload 'reftex-index-phrase-mode "reftex-index" "Phrase Mode" t)
+  (add-hook 'latex-mode-hook 'turn-on-reftex) ; with Emacs latex mode
+  (add-hook 'reftex-load-hook 'imenu-add-menubar-index)
+  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+#+END_SRC
+
+We also want to make sure that we use my main master bibliography and the AASTex citation format as default.
+#+BEGIN_SRC emacs-lisp  
+  (setq reftex-default-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
+  (setq reftex-cite-format 'natbib)
+#+END_SRC
+
+Finally, we want to set the default label prefixes to match standard practice.
+#+BEGIN_SRC emacs-lisp  
+(setq LaTeX-eqnarray-label "eq"
+      LaTeX-equation-label "eq"
+      LaTeX-figure-label "fig"
+      LaTeX-table-label "tab"
+      LaTeX-myChapter-label "chap"
+      TeX-auto-save t
+      TeX-newline-function 'reindent-then-newline-and-indent
+      TeX-parse-self t)
+#+END_SRC
+
+** PDF output and miscellaneous settings
+First things first: we want to output PDF files by default, auto save, and not ask about saving.
+#+BEGIN_SRC emacs-lisp  
+  (setq TeX-auto-save t)
+  (setq TeX-save-query nil)
+  (setq TeX-PDF-mode t)
+#+END_SRC
+
+We also want to use Skim as our PDF viewer, since it has better synctex integration than Preview and knows to reload a file when we recompile it.
+#+BEGIN_SRC emacs-lisp  
+(setq TeX-view-program-selection '((output-pdf "PDF Viewer")))
+(setq TeX-view-program-list
+     '(("PDF Viewer" "/Applications/Skim.app/Contents/SharedSupport/displayline -b -g %n %o %b")))
+#+END_SRC
+
+* Org mode setup
+This might be the biggest section of them all. Let's start by requiring every org package we'll need. We'll break out each sub-mode (org-mode is practically an OS by itself) into its own section below.
+#+BEGIN_SRC emacs-lisp  
+  (require 'org)
+  (require 'ox-latex)
+  (require 'ob)
+  (require 'org-journal)
+  (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+#+END_SRC
+
+** Org-RefTeX setup.
+Writing latex documents in org is great, but it takes a while to set up things properly. The biggest bugbear is getting it to play nicely with reftex.
+
+The first thing is to add in a nice keybind for a citation (although I think this might be obsoleted by org-ref, below).
+#+BEGIN_SRC emacs-lisp  
+(defun org-mode-reftex-setup ()
+  (load-library "reftex") 
+  (and (buffer-file-name)
+       (file-exists-p (buffer-file-name))
+       (reftex-parse-all))
+  (define-key org-mode-map (kbd "C-c (") 'reftex-citation))
+(add-hook 'org-mode-hook 'org-mode-reftex-setup)
+#+END_SRC
+
+We also want to pre-load our master bibliography with =ebib=.
+#+BEGIN_SRC emacs-lisp  
+(setq ebib-preload-bib-files
+      (list "~/Library/texmf/bibtex/bib/biblio.bib"))
+(org-add-link-type "ebib" 'ebib)
+#+END_SRC
+
+
+** Org-LaTeX setup
+The main things we want to do here are set org-latex to use latexmk to compile latex files and be able to use the AASTeX template as a valid document class.
+#+BEGIN_SRC emacs-lisp  
+  (setq org-latex-pdf-process (list "latexmk -f -pdf %f"))
+  (setq org-latex-hyperref-template nil)
+  (add-to-list 'org-latex-classes
+               '("aastex"
+                 "\\documentclass{aastex}
+  [NO-DEFAULT-PACKAGES]
+  [PACKAGES]
+  [EXTRA]"
+  ("\\section{%s}" . "\\section*{%s}")
+  ("\\subsection{%s}" . "\\subsection*{%s}")
+  ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+  ("\\paragraph{%s}" . "\\paragraph*{%s}")
+  ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+#+END_SRC
+
+** Org-ref setup
+As stated earlier, I think this makes the business with reftex earlier obsolete. Org-ref is pretty amazing, allowing you to insert normal org-links for citations and bibliographies and click on the links to bring up a PDF of the paper. We can just point at the default bibliography file and the folder where I keep my papers, and voila.
+#+BEGIN_SRC emacs-lisp  
+(defun org-ref-setup ()
+  (setq org-ref-default-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
+  (setq org-ref-pdf-directory "~/Documents/Papers")
+  (setq bibtex-completion-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
+  (require 'org-ref)
+  (visual-line-mode))
+(add-hook 'org-mode-hook 'org-ref-setup)
+#+END_SRC
+
+** Org-babel setup
+Babel is pretty amazing, particularly when used in org-latex to generate figures inline with various languages. For some reason none of these are turned on by default though, so let's allow it to execute code blocks in Dot, ditaa, Python, gnuplot, and PlantUML.
+#+BEGIN_SRC emacs-lisp  
+(defun my-babel-languages ()
+  (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
+  (org-babel-do-load-languages   
+   'org-babel-load-languages
+   '((dot . t)
+     (ditaa . t)
+     (python . t)
+     (gnuplot . t)
+     (plantuml . t)
+     (python . t))))
+(add-hook 'org-mode-hook 'my-babel-languages)
+#+END_SRC
+
+The asking if you *really* want to execute a code block makes sense, but it's annoying for these languages, so let's turn it off.
+#+BEGIN_SRC emacs-lisp  
+(defun my-org-confirm-babel-evaluate (lang body)
+  (not (member lang '("ditaa" "dot" "plantuml" "python" "gnuplot"))))
+(setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
+#+END_SRC
+
+** Org-agenda setup
+Here we just want to tell org-agenda mode where to find all of our files that contain todo list items - my general todo files in =~/org/= and the files generated by org-journal. 
+#+BEGIN_SRC emacs-lisp  
+(setq org-agenda-files (list "~/org/work.org" "~/org/home.org"))
+(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
+(setq org-agenda-file-regexp "\\`[^.].*\\.org\\'\\|[0-9]+")
+#+END_SRC
+
+We'd also like to log when we get stuff done for reference.
+#+BEGIN_SRC emacs-lisp  
+(setq org-log-done 'time)
+#+END_SRC
+
+We also want to set convenient keybinds for linking to items and calling up the agenda
+#+BEGIN_SRC emacs-lisp  
+(define-key global-map "\C-cl" 'org-store-link)
+(define-key global-map "\C-ca" 'org-agenda)
+#+END_SRC
+
+* Miscellaneous modes setup
+Right now, this is just ensuring that Makefiles have tabs used instead of spaces for indentation, because of Makefile syntax's wonky requirements about tabs.
+#+BEGIN_SRC emacs-lisp  
+(add-hook 'makefile-mode (lambda ()
+                            (setq-local indent-tabs-mode t)))
+(add-hook 'makefile-automake-mode-hook (lambda ()
+                                         (setq-local indent-tabs-mode t)))
+#+END_SRC
+* End
+So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
+#+BEGIN_SRC emacs-lisp
+  (provide 'emacs-init)
+#+END_SRC
+And that's it! Every time you save this file, it will automatically create and compile =emacs-init.el=, and =.emacs= will load the configuration from that file on startup.
+
+# Local Variables:
+# eval: (add-hook 'after-save-hook (lambda () (org-babel-tangle) (byte-compile-file "emacs-init.el")) nil t)
+# End:
