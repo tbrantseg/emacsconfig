@@ -721,7 +721,7 @@ Right now, this is just ensuring that Makefiles have tabs used instead of spaces
                                          (setq-local indent-tabs-mode t)))
 #+END_SRC
 * Hydra setup
-[[https://github.com/abo-abo/hydra][Hydra]] is a fascinating package that creates miniature user-defined modal menus. There seems to be no end of useful stuff for it to do, but I've just gotten into it, so there's not a whole lot for now.
+[[https://github.com/abo-abo/hydra][Hydra]] is a fascinating package that creates miniature user-defined modal menus. There seems to be no end of useful stuff for it to do, but I've just gotten into it, so there's not a whole lot for now. Several of these are taken from https://github.com/abo-abo/hydra/wiki/Emacs, the Hydra wiki.
 
 The only required setup is the usual (=require=) block.
 #+BEGIN_SRC emacs-lisp
@@ -785,7 +785,45 @@ I tinker with this config a lot, so let's make a hydra to access and reload it q
   ("p" list-packages)
   ("g" customize-group))
 
-  (global-set-key (kbd "C-c M-c") 'tb-config-hydra/body)
+  (global-set-key (kbd "C-c c") 'tb-config-hydra/body)
+#+END_SRC
+
+** Org-mode outline navigation
+#+BEGIN_SRC emacs-lisp
+  (defhydra hydra-outline (:color pink :hint nil)
+    "
+  ^Hide^             ^Show^           ^Move
+  ^^^^^^------------------------------------------------------
+  _q_: sublevels     _a_: all         _u_: up
+  _t_: body          _e_: entry       _n_: next visible
+  _o_: other         _i_: children    _p_: previous visible
+  _c_: entry         _k_: branches    _f_: forward same level
+  _l_: leaves        _s_: subtree     _b_: backward same level
+  _d_: subtree
+
+  "
+    ;; Hide
+    ("q" outline-hide-sublevels)    ; Hide everything but the top-level headings
+    ("t" outline-hide-body)         ; Hide everything but headings (all body lines)
+    ("o" outline-hide-other)        ; Hide other branches
+    ("c" outline-hide-entry)        ; Hide this entry's body
+    ("l" outline-hide-leaves)       ; Hide body lines in this entry and sub-entries
+    ("d" outline-hide-subtree)      ; Hide everything in this entry and sub-entries
+    ;; Show
+    ("a" outline-show-all)          ; Show (expand) everything
+    ("e" outline-show-entry)        ; Show this heading's body
+    ("i" outline-show-children)     ; Show this heading's immediate child sub-headings
+    ("k" outline-show-branches)     ; Show all sub-headings under this heading
+    ("s" outline-show-subtree)      ; Show (expand) everything in this heading & below
+    ;; Move
+    ("u" outline-up-heading)                ; Up
+    ("n" outline-next-visible-heading)      ; Next
+    ("p" outline-previous-visible-heading)  ; Previous
+    ("f" outline-forward-same-level)        ; Forward - same level
+    ("b" outline-backward-same-level)       ; Backward - same level
+    ("z" nil "leave"))
+
+  (global-set-key (kbd "C-c o") 'hydra-outline/body) ; by example
 #+END_SRC
 
 * End
