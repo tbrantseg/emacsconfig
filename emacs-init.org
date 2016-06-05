@@ -728,6 +728,26 @@ The only required setup is the usual (=require=) block.
   (require 'hydra)
 #+END_SRC
 
+** System/File Management
+I don't frequently use =eshell= and =dired=, but they're powerful enough that I feel like I should start using them more. Binding all this to a hydra is my attempt to make them a little more accessible.
+#+BEGIN_SRC emacs-lisp
+  (defhydra tb-system-hydra (:color blue :hint nil)
+  "
+  File system commands:
+  ---------------
+  _s_: Open eshell
+  _d_: Open dired in current directory
+  _p_: Find file in project
+  _g_: grep in project
+  "
+  ("s" eshell)
+  ("d" dired)
+  ("p" projectile-find-file)
+  ("g" projectile-grep))
+
+  (global-set-key (kbd "C-c s") 'tb-system-hydra/body)
+#+END_SRC
+
 ** Environment Info
 I find myself needing to check various environment values a lot. I can never remember the bindings, and using =M-x= for that is a pain, so let's summarize all these functions into a single hydra binding. 
 #+BEGIN_SRC emacs-lisp
