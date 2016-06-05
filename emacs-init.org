@@ -6,12 +6,12 @@
 We, the people...wait, wrong preamble. This is my attempt to produce a literate, structured emacs init file. This seems easier to maintain and easier to use than both a traditional monolithic =.emacs= file and a modular config - easier navigation, easier debugging, and easier maintaining.
 
 ** Useful references
-There are a lot of useful references out there for maintaining and expanding this configuration
-- There are quite a few literate configs out there that I've heavily referenced while making this; I'm putting links to them here so I can find them again later:
+There are a lot of useful references out there for maintaining and expanding this configuration. This is a section where I am storing links to useful configs, to serve as one big emacs link pool for myself, and also to reference later.
+- There are quite a few literate configs out there that I've heavily referenced while making this.
   - Sriram Krishnaswamy's giant config: http://sriramkswamy.github.io/dotemacs/
   - Sacha Chua's nice emacs config: http://pages.sachachua.com/.emacs.d/Sacha.html
   - Angry Bacon's config, which has nice use of =use-package=: https://github.com/angrybacon/dotemacs/blob/master/dotemacs.org
-  - Trevoke's config: https://github.com/Trevoke/.emacs.d/blob/master/aldric.org
+  - Trevoke's sleek config: https://github.com/Trevoke/.emacs.d/blob/master/aldric.org
 - Of course, for any of this it's nice to reference /An Introduction to Programming in Emacs Lisp/, which I really need to get around to going through completely at some point: https://www.gnu.org/software/emacs/manual/html_node/eintr/
 - A lot of this (particularly the C++ and Helm sections) is also taken from Tuhdo's C/C++ IDE guide (http://tuhdo.github.io/c-ide.html), Helm guide (http://tuhdo.github.io/helm-intro.html), and Projectile guide (http://tuhdo.github.io/helm-projectile.html).
 
@@ -78,7 +78,7 @@ The =emacs-init.el= file included with this file contains the following code:
 
 On first run, =emacs-init.el= will thus tangle this file and replace itself with a new =emacs-init.el= generated from this file (=emacs-init.org=).
 
-This file contains a bit of file-local code at the end, namely:
+But what about after? This file contains a bit of file-local code at the end, namely:
 #+BEGIN_SRC emacs-lisp :tangle no
   (add-hook 'after-save-hook (lambda ()
                                (org-babel-tangle)
@@ -86,12 +86,17 @@ This file contains a bit of file-local code at the end, namely:
             nil t)
 #+END_SRC
 
-This lambda function will cause this file to regenerate and byte-compile the file =emacs-init.el= every time you save this file, ensuring that any changes are automatically ready to go next time you start Emacs. Handy!
+This lambda function, saved at the very end of the file as an "eval" will cause this file to regenerate and byte-compile the file =emacs-init.el= every time you save this file, ensuring that any changes are automatically ready to go next time you start Emacs. Handy!
 
 ** TODO Add method for checking that all packages are installed.
 
 * General-purpose code
 This section contains code to set up the package manager and the general look and feel of the system.
+** Startup
+The splash screen is kind of pointless and we don't need to see it every time.
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-screen t)
+#+END_SRC
 
 ** Name and email
 My default name isn't ever quite right, so we'll just make sure it's set correctly.
@@ -141,6 +146,7 @@ The toolbar is useful for about the first ten minutes of using emacs, but after 
   (tool-bar-mode -1)
 #+END_SRC
 
+** UI behavior
 ** Mode line
 This is still a work in progress. I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line=. =smart-mode-line= is great but seems to have some weird annoying errors, but I think I'm close to getting it working.
 #+BEGIN_SRC emacs-lisp  
@@ -205,6 +211,7 @@ Also add a keybind for toggling line numbers as needed.
 (global-set-key (kbd "<M-f10>") 'nlinum-mode)
 #+END_SRC
 ** Other global keybinds
+
 With that, we're through the general setup. Up next, Helm.
 
 * Helm setup
@@ -713,6 +720,54 @@ Right now, this is just ensuring that Makefiles have tabs used instead of spaces
 (add-hook 'makefile-automake-mode-hook (lambda ()
                                          (setq-local indent-tabs-mode t)))
 #+END_SRC
+* Hydra setup
+[[https://github.com/abo-abo/hydra][Hydra]] is a fascinating package that creates miniature user-defined modal menus. There seems to be no end of useful stuff for it to do, but I've just gotten into it, so there's not a whole lot for now.
+
+The only required setup is the usual (=require=) block.
+#+BEGIN_SRC emacs-lisp
+  (require 'hydra)
+#+END_SRC
+
+** Environment Info
+I find myself needing to check various environment values a lot. I can never remember the bindings, and using =M-x= for that is a pain, so let's summarize all these functions into a single hydra binding. 
+#+BEGIN_SRC emacs-lisp
+  (defhydra tb-info-hydra (:color blue :hint nil)
+  "
+  Emacs environment (describe):
+  ----------------------------
+  _k_: Describe key binding
+  _v_: Describe variable
+  _m_: Describe current mode
+  "
+  ("k" describe-key)
+  ("v" describe-variable)
+  ("m" describe-mode))
+
+  (global-set-key (kbd "C-c C-?") 'tb-info-hydra/body)
+#+END_SRC
+
+** Configuration functions
+I tinker with this config a lot, so let's make a hydra to access and reload it quickly, as well as bringing up the package menu to check on new packages.
+#+BEGIN_SRC emacs-lisp
+  (defhydra tb-config-hydra (:color blue :hint nil)
+  "
+  Configuration functions
+  -----------------------
+  _c_: Open emacs-init.org
+  _r_: Reload configuration
+  _e_: Open .emacs
+  _p_: List packages
+  _g_: Customize group
+  "
+  ("c" (find-file "~/emacs-init/emacs-init.org"))
+  ("e" (find-file "~/.emacs"))
+  ("r" (load-file "~/emacs-init/emacs-init.elc"))
+  ("p" list-packages)
+  ("g" customize-group))
+
+  (global-set-key (kbd "C-c M-c") 'tb-config-hydra/body)
+#+END_SRC
+
 * End
 So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
 #+BEGIN_SRC emacs-lisp
@@ -723,3 +778,5 @@ And that's it! Every time you save this file, it will automatically create and c
 # Local Variables:
 # eval: (add-hook 'after-save-hook (lambda () (org-babel-tangle) (byte-compile-file "emacs-init.el")) nil t)
 # End:
+
+# emacs-init.org ends here
