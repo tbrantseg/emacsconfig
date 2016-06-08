@@ -26,6 +26,11 @@ Keybindings defined in this configuration:
 | f6    | Switch between header/implementation files    | C/C++        |
 | f7    | Display header/implementation in other window | C/C++        |
 | f8    | Toggle projectile speedbar                    | C/C++        |
+|-------+-----------------------------------------------+--------------|
+| C-c s | File system browser hydra                     | Global       |
+| C-c e | Emacs environment hydra                       | Global       |
+| C-c c | Configuration hydra                           | Global       |
+| C-c o | Outline browser hydra                         | Global       |
 
 * Bootstrapping
 This section is intended to get you up and running.
@@ -98,6 +103,13 @@ The splash screen is kind of pointless and we don't need to see it every time.
   (setq inhibit-startup-screen t)
 #+END_SRC
 
+** System path
+Most of the executables installed by macports are in =/opt/local/bin=, so we want to make sure subprocesses (like Helm-GTAGS) can find the executable programs they need.
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'exec-path "/opt/local/bin")
+  (add-to-list 'exec-path "/opt/local/sbin")
+#+END_SRC
+
 ** Name and email
 My default name isn't ever quite right, so we'll just make sure it's set correctly.
 #+BEGIN_SRC emacs-lisp
@@ -148,11 +160,16 @@ The toolbar is useful for about the first ten minutes of using emacs, but after 
 
 ** UI behavior
 ** Mode line
-This is still a work in progress. I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line=. =smart-mode-line= is great but seems to have some weird annoying errors, but I think I'm close to getting it working.
-#+BEGIN_SRC emacs-lisp  
-  (setq sml/theme 'dark)
-  (setq sml/no-confirm-load-theme t)
-  (sml/setup)
+This is still a work in progress. To deal with a bug in rendering powerline-style modelines on Mac, we have to add the following line:
+#+BEGIN_SRC emacs-lisp
+  (setq ns-use-srgb-colorspace nil)
+#+END_SRC
+
+I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line=. =smart-mode-line= is great but seems to have some weird annoying errors, but I think I'm close to getting it working. 
+#+BEGIN_SRC emacs-lisp
+  (require 'spaceline-config)
+  (spaceline-emacs-theme)
+  (spaceline-helm-mode)
 #+END_SRC
 
 ** Terminal appearance
@@ -192,6 +209,7 @@ I also am completely used to using the command key as meta, so let's bow to the 
 #+BEGIN_SRC emacs-lisp  
   (setq mac-command-modifier 'meta)
 #+END_SRC
+
 ** Line numbers
 Add line numbers to all of the modes that are likely to need them.
 #+BEGIN_SRC emacs-lisp  
@@ -352,8 +370,9 @@ Projectile is utterly fantastic and is an indispensable tool for any project of 
 #+END_SRC
 
 ** Magit
-Precisely what we said above about Projectile. Magit is almost perfect out of the box, so the only line here is binding a key to =magit-status=.
-#+BEGIN_SRC emacs-lisp  
+Precisely what we said above about Projectile. Magit is almost perfect out of the box, so the only line here is binding a key to =magit-status=. We also want to make sure it can find the MacPorts install of git, so we'll specify the path
+#+BEGIN_SRC emacs-lisp
+  (setq magit-git-executable "/opt/local/bin/git")
   (global-set-key (kbd "C-c g") 'magit-status)
 #+END_SRC
 
@@ -486,17 +505,23 @@ Finally, we'll plug RTags into company.
 
 There's one last bugbear though. RTags requires a =compile_commands.json= file to use for finding completions - a database of the compilation commands used for each file. This is generated automatically with CMake, but as I use Autotools, you've got to be a bit tricky. Thankfully, [[https://github.com/rizsotto/Bear][Bear]] intercepts compiler calls from a standard makefile to generate this file for Autotools-based projects. The trick is calling it only when you want. The solution I wound up hitting on was defining a local variable called =compdb-command= in the project =.dir-locals.el= which contains an absolute path to a script that runs =cd (project root) && make clean && bear make= to regenerate the compilation DB. Ideally, this keybind should generate the script if it doesn't exist, but one thing at a time.
 #+BEGIN_SRC emacs-lisp  
-(defun regen-compilation-db ()
-  (interactive)
-  (setq-local compilation-read-command nil)
-  (compile compdb-command))
-  
-(global-set-key (kbd "<f4>") 'regen-compilation-db)
+  (defcustom compdb-command nil
+    "Shell command used to generate the compilation database."
+    :type 'string
+    :group 'tom-custom)
+
+  (defun regen-compilation-db ()
+    (interactive)
+    (setq-local compilation-read-command nil)
+    (compile compdb-command))
+
+  (global-set-key (kbd "<f4>") 'regen-compilation-db)
 #+END_SRC
 
 * PSQL mode setup
 Very few tweaks here. We just want to make sure that PostgreSQL-specific keywords are highlighted and (being a style stickler) that SQL keywords are automatically put in upper case.
 #+BEGIN_SRC emacs-lisp  
+  (require 'sql-indent)
   (add-to-list 'auto-mode-alist
                '("\\.psql$" . (lambda ()
                                 (sql-mode))))
@@ -697,8 +722,8 @@ The asking if you *really* want to execute a code block makes sense, but it's an
 Here we just want to tell org-agenda mode where to find all of our files that contain todo list items - my general todo files in =~/org/= and the files generated by org-journal. 
 #+BEGIN_SRC emacs-lisp  
 (setq org-agenda-files (list "~/org/work.org" "~/org/home.org"))
-(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
 (setq org-agenda-file-regexp "\\`[^.].*\\.org\\'\\|[0-9]+")
+(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
 #+END_SRC
 
 We'd also like to log when we get stuff done for reference.
@@ -711,7 +736,6 @@ We also want to set convenient keybinds for linking to items and calling up the 
 (define-key global-map "\C-cl" 'org-store-link)
 (define-key global-map "\C-ca" 'org-agenda)
 #+END_SRC
-
 * Miscellaneous modes setup
 Right now, this is just ensuring that Makefiles have tabs used instead of spaces for indentation, because of Makefile syntax's wonky requirements about tabs.
 #+BEGIN_SRC emacs-lisp  
@@ -736,11 +760,13 @@ I don't frequently use =eshell= and =dired=, but they're powerful enough that I 
   File system commands:
   ---------------
   _s_: Open eshell
+  _t_: Open plain terminal
   _d_: Open dired in current directory
   _p_: Find file in project
   _g_: grep in project
   "
   ("s" eshell)
+  ("t" ansi-term)
   ("d" dired)
   ("p" projectile-find-file)
   ("g" projectile-grep))
@@ -763,7 +789,7 @@ I find myself needing to check various environment values a lot. I can never rem
   ("v" describe-variable)
   ("m" describe-mode))
 
-  (global-set-key (kbd "C-c C-?") 'tb-info-hydra/body)
+  (global-set-key (kbd "C-c e") 'tb-info-hydra/body)
 #+END_SRC
 
 ** Configuration functions
@@ -789,6 +815,7 @@ I tinker with this config a lot, so let's make a hydra to access and reload it q
 #+END_SRC
 
 ** Org-mode outline navigation
+This hydra is copy-pasted straight from the wiki. Seems like a great way to bounce around a big org-mode file.
 #+BEGIN_SRC emacs-lisp
   (defhydra hydra-outline (:color pink :hint nil)
     "
