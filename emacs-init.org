@@ -103,13 +103,6 @@ The splash screen is kind of pointless and we don't need to see it every time.
   (setq inhibit-startup-screen t)
 #+END_SRC
 
-** System path
-Most of the executables installed by macports are in =/opt/local/bin=, so we want to make sure subprocesses (like Helm-GTAGS) can find the executable programs they need.
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'exec-path "/opt/local/bin")
-  (add-to-list 'exec-path "/opt/local/sbin")
-#+END_SRC
-
 ** Name and email
 My default name isn't ever quite right, so we'll just make sure it's set correctly.
 #+BEGIN_SRC emacs-lisp
@@ -130,6 +123,12 @@ I am not sure if having three package management archives is a good idea. It pro
                             ("marmalade" . "http://marmalade-repo.org/packages/")
                             ("melpa" . "http://melpa.milkbox.net/packages/")))
   (package-initialize)
+#+END_SRC
+
+** System path
+Most of the executables installed by macports are in =/opt/local/bin=, so we want to make sure subprocesses (like Helm-GTAGS) can find the executable programs they need.
+#+BEGIN_SRC emacs-lisp
+  (exec-path-from-shell-initialize)
 #+END_SRC
 
 ** Theme
@@ -668,7 +667,7 @@ We also want to pre-load our master bibliography with =ebib=.
 ** Org-LaTeX setup
 The main things we want to do here are set org-latex to use latexmk to compile latex files and be able to use the AASTeX template as a valid document class.
 #+BEGIN_SRC emacs-lisp  
-  (setq org-latex-pdf-process (list "latexmk -f -pdf %f"))
+  (setq org-latex-pdf-process (list "/opt/local/bin/latexmk -f -pdf %f"))
   (setq org-latex-hyperref-template nil)
   (add-to-list 'org-latex-classes
                '("aastex"
