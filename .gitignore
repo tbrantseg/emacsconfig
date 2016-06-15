@@ -40,3 +40,9 @@ flycheck_*.el
 
 # projectiles files
 .projectile
+
+# secret files
+.secret.el
+
+# tangled elisp file
+emacs-init.el

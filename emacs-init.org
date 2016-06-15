@@ -94,7 +94,7 @@ But what about after? This file contains a bit of file-local code at the end, na
 This lambda function, saved at the very end of the file as an "eval" will cause this file to regenerate and byte-compile the file =emacs-init.el= every time you save this file, ensuring that any changes are automatically ready to go next time you start Emacs. Handy!
 
 ** TODO Add method for checking that all packages are installed.
-
+   
 * General-purpose code
 This section contains code to set up the package manager and the general look and feel of the system.
 ** Startup
@@ -115,6 +115,7 @@ If there's an error in here, we want to know about it and fix it ASAP.
 #+BEGIN_SRC emacs-lisp
   (setq debug-on-error t)
 #+END_SRC
+
 ** Package management
 I am not sure if having three package management archives is a good idea. It probably isn't, but untangling that mess that I have probably made is beyond my patience at the moment, so here we are.
 #+BEGIN_SRC emacs-lisp
@@ -128,13 +129,14 @@ I am not sure if having three package management archives is a good idea. It pro
 ** System path
 Most of the executables installed by macports are in =/opt/local/bin=, so we want to make sure subprocesses (like Helm-GTAGS) can find the executable programs they need.
 #+BEGIN_SRC emacs-lisp
+  (require 'exec-path-from-shell)
   (exec-path-from-shell-initialize)
 #+END_SRC
 
 ** Theme
 I change preferred themes all the time: =lush=, =alect-black-alt=, =distinguished=, and =manoj-dark= are ones I keep coming back to, but I'm always on the lookout for a new one.
 #+BEGIN_SRC emacs-lisp
-  (load-theme 'lush t)
+  (load-theme 'gruvbox t)
 #+END_SRC
 
 ** Font
@@ -157,24 +159,24 @@ The toolbar is useful for about the first ten minutes of using emacs, but after 
   (tool-bar-mode -1)
 #+END_SRC
 
-** UI behavior
 ** Mode line
 This is still a work in progress. To deal with a bug in rendering powerline-style modelines on Mac, we have to add the following line:
 #+BEGIN_SRC emacs-lisp
   (setq ns-use-srgb-colorspace nil)
 #+END_SRC
 
-I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line=. =smart-mode-line= is great but seems to have some weird annoying errors, but I think I'm close to getting it working. 
+I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line=. =smart-mode-line= is great but seems to have some weird annoying errors, but I think I'm close to getting it working. The powerline theme is nice looking.
 #+BEGIN_SRC emacs-lisp
-  (require 'spaceline-config)
-  (spaceline-emacs-theme)
-  (spaceline-helm-mode)
+  (setq sml/no-confirm-load-theme t)
+  (setq sml/theme 'powerline)
+  (sml/setup)
 #+END_SRC
 
 ** Terminal appearance
 There are times when it's handy to open a quick emacs session in a terminal, for whatever reason. However, there are a few different display things - the line numbers tend to display right up against text, which is hard to read, and I am so used to using the trackpad to scroll that it always throws me off. We also can get rid of the menu bar, since accessing it in the terminal is a huge pain.
 #+BEGIN_SRC emacs-lisp  
   (unless window-system
+    (osx-clipboard-mode)
     (menu-bar-mode -1)
     (setq nlinum-format "%d ")
     (require 'mouse)
@@ -362,7 +364,6 @@ Projectile is utterly fantastic and is an indispensable tool for any project of 
 #+BEGIN_SRC emacs-lisp  
   (require 'projectile)
   (projectile-global-mode)
-  (require 'projectile-speedbar)
   (setq projectile-completion-system 'helm)
   (helm-projectile-on)
   (global-set-key [f8] 'sr-speedbar-toggle)
@@ -371,7 +372,6 @@ Projectile is utterly fantastic and is an indispensable tool for any project of 
 ** Magit
 Precisely what we said above about Projectile. Magit is almost perfect out of the box, so the only line here is binding a key to =magit-status=. We also want to make sure it can find the MacPorts install of git, so we'll specify the path
 #+BEGIN_SRC emacs-lisp
-  (setq magit-git-executable "/opt/local/bin/git")
   (global-set-key (kbd "C-c g") 'magit-status)
 #+END_SRC
 
@@ -509,6 +509,8 @@ There's one last bugbear though. RTags requires a =compile_commands.json= file t
     :type 'string
     :group 'tom-custom)
 
+  (put 'compdb-command 'safe-local-variable #'stringp)
+
   (defun regen-compilation-db ()
     (interactive)
     (setq-local compilation-read-command nil)
@@ -520,7 +522,7 @@ There's one last bugbear though. RTags requires a =compile_commands.json= file t
 * PSQL mode setup
 Very few tweaks here. We just want to make sure that PostgreSQL-specific keywords are highlighted and (being a style stickler) that SQL keywords are automatically put in upper case.
 #+BEGIN_SRC emacs-lisp  
-  (require 'sql-indent)
+  ;(require 'sql-indent)
   (add-to-list 'auto-mode-alist
                '("\\.psql$" . (lambda ()
                                 (sql-mode))))
@@ -548,7 +550,7 @@ We also want to use =company-anaconda= for python completion - it provides excel
 ** IPython
 IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
  #+BEGIN_SRC emacs-lisp  
-   (setq-default py-shell-name "/opt/local/Library/Frameworks/Python.framework/Versions/2.7/bin//ipython")
+   (setq-default py-shell-name "/opt/local/bin/ipython")
    (setq-default py-which-bufname "IPython")
    (setq python-shell-interpreter "ipython")
  #+END_SRC
@@ -736,12 +738,24 @@ We also want to set convenient keybinds for linking to items and calling up the 
 (define-key global-map "\C-ca" 'org-agenda)
 #+END_SRC
 * Miscellaneous modes setup
+** Makefile mode
 Right now, this is just ensuring that Makefiles have tabs used instead of spaces for indentation, because of Makefile syntax's wonky requirements about tabs.
 #+BEGIN_SRC emacs-lisp  
 (add-hook 'makefile-mode (lambda ()
                             (setq-local indent-tabs-mode t)))
 (add-hook 'makefile-automake-mode-hook (lambda ()
                                          (setq-local indent-tabs-mode t)))
+#+END_SRC
+
+** LilyPond mode
+The LilyPond package is not on the normal package manager, so we'll have to load that stuff normally.
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "/opt/local/share/emacs/site-lisp/") 
+  (autoload 'LilyPond-mode "lilypond-mode")
+  (setq auto-mode-alist
+        (cons '("\\.ly$" . LilyPond-mode) auto-mode-alist))
+
+  (add-hook 'LilyPond-mode-hook (lambda () (turn-on-font-lock)))
 #+END_SRC
 * Hydra setup
 [[https://github.com/abo-abo/hydra][Hydra]] is a fascinating package that creates miniature user-defined modal menus. There seems to be no end of useful stuff for it to do, but I've just gotten into it, so there's not a whole lot for now. Several of these are taken from https://github.com/abo-abo/hydra/wiki/Emacs, the Hydra wiki.
@@ -782,10 +796,12 @@ I find myself needing to check various environment values a lot. I can never rem
   ----------------------------
   _k_: Describe key binding
   _v_: Describe variable
+  _f_: Describe function
   _m_: Describe current mode
   "
   ("k" describe-key)
   ("v" describe-variable)
+  ("f" describe-function)
   ("m" describe-mode))
 
   (global-set-key (kbd "C-c e") 'tb-info-hydra/body)
@@ -806,7 +822,7 @@ I tinker with this config a lot, so let's make a hydra to access and reload it q
   "
   ("c" (find-file "~/emacs-init/emacs-init.org"))
   ("e" (find-file "~/.emacs"))
-  ("r" (load-file "~/emacs-init/emacs-init.elc"))
+  ("r" (load-file "~/emacs-init/emacs-init.el"))
   ("p" list-packages)
   ("g" customize-group))
 
@@ -852,6 +868,11 @@ This hydra is copy-pasted straight from the wiki. Seems like a great way to boun
   (global-set-key (kbd "C-c o") 'hydra-outline/body) ; by example
 #+END_SRC
 
+* Other files
+We don't really want all of this stuff in the open configuration, so let's load a separate file with things like cached passwords and ssh identities.
+#+BEGIN_SRC emacs-lisp
+  (load-file "~/emacs-init/secret.el")
+#+END_SRC
 * End
 So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
 #+BEGIN_SRC emacs-lisp
