@@ -46,3 +46,4 @@ flycheck_*.el
 
 # tangled elisp file
 emacs-init.el
+emacs-init.el

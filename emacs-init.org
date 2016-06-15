@@ -1,4 +1,4 @@
-#+AUTHOR: Tom Brantseg
+//#+AUTHOR: Tom Brantseg
 #+PROPERTY: header-args :tangle yes
 
 * About
@@ -868,10 +868,15 @@ This hydra is copy-pasted straight from the wiki. Seems like a great way to boun
   (global-set-key (kbd "C-c o") 'hydra-outline/body) ; by example
 #+END_SRC
 
-* Other files
+* Last-minute setup
 We don't really want all of this stuff in the open configuration, so let's load a separate file with things like cached passwords and ssh identities.
 #+BEGIN_SRC emacs-lisp
   (load-file "~/emacs-init/secret.el")
+#+END_SRC
+
+Also, while =debug-on-error= is nice while loading, it's really irritating while trying to actually do stuff, so let's turn it back off now that we're done loading.
+#+BEGIN_SRC emacs-lisp
+  (setq debug-on-error nil)
 #+END_SRC
 * End
 So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
