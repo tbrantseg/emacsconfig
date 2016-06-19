@@ -229,7 +229,12 @@ Also add a keybind for toggling line numbers as needed.
 #+BEGIN_SRC emacs-lisp  
 (global-set-key (kbd "<M-f10>") 'nlinum-mode)
 #+END_SRC
-** Other global keybinds
+** Other global keybinds and settings
+=which-key= mode is awesome, and great for actually remembering keybindings.
+#+BEGIN_SRC emacs-lisp
+  (require 'which-key)
+  (which-key-mode)
+#+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
 
