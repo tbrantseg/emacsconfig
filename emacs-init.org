@@ -1,4 +1,4 @@
-//#+AUTHOR: Tom Brantseg
+#+AUTHOR: Tom Brantseg
 #+PROPERTY: header-args :tangle yes
 
 * About
@@ -114,6 +114,11 @@ My default name isn't ever quite right, so we'll just make sure it's set correct
 If there's an error in here, we want to know about it and fix it ASAP.
 #+BEGIN_SRC emacs-lisp
   (setq debug-on-error t)
+#+END_SRC
+
+Also, the boop of the normal bell is pretty annoying, so let's shut it up.
+#+BEGIN_SRC emacs-lisp
+  (setq visible-bell t)
 #+END_SRC
 
 ** Backup files
