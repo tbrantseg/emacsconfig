@@ -116,6 +116,26 @@ If there's an error in here, we want to know about it and fix it ASAP.
   (setq debug-on-error t)
 #+END_SRC
 
+** Backup files
+This bit of code stores all backup and auto-save files in one location, including stuff from remote files.
+#+BEGIN_SRC emacs-lisp
+  (let ((backup-dir "~/.emacs.d/backups")
+        (auto-saves-dir "~/.emacs.d/auto-saves"))
+    (dolist (dir (list backup-dir auto-saves-dir))
+      (when (not (file-directory-p dir))
+        (make-directory dir t)))
+    (setq backup-directory-alist `(("." . ,backup-dir))
+          auto-save-file-name-transforms `((".*" ,auto-saves-dir t))
+          auto-save-list-file-prefix (concat auto-saves-dir ".saves-")
+          tramp-backup-directory-alist `((".*" . ,backup-dir))
+          tramp-auto-save-directory auto-saves-dir))
+
+  (setq backup-by-copying t)
+  (setq delete-old-versions t)
+  (setq version-control t)
+  (setq kept-new-versions 5)
+  (setq kept-old-versions 2)
+#+END_SRC
 ** Package management
 I am not sure if having three package management archives is a good idea. It probably isn't, but untangling that mess that I have probably made is beyond my patience at the moment, so here we are.
 #+BEGIN_SRC emacs-lisp
