@@ -257,8 +257,8 @@ Also add a keybind for toggling line numbers as needed.
 ** Other global keybinds and settings
 =which-key= mode is awesome, and great for actually remembering keybindings.
 #+BEGIN_SRC emacs-lisp
-  (require 'which-key)
-  (which-key-mode)
+;  (require 'which-key)
+;  (which-key-mode)
 #+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
@@ -439,6 +439,11 @@ And, breaking my rule about mode-specific configuration coming later, here's som
 #+END_SRC
 
 * C++ mode setup
+** Projectile hook
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'c++-mode-hook 'projectile-mode)
+#+END_SRC
+   
 ** Style
 I am, I suppose, picky about the appearance of C++ code. At the very least: tabs are bad, sloppy indentation is bad, overly narrow indents are bad, and [[http://www.stroustrup.com/bs_faq2.html][Stroustrup style]] appears to be the style that corresponds to my natural inclination for how code should look. But hey! We can do all that in a couple lines, so let's do that right now.
 #+BEGIN_SRC emacs-lisp  
@@ -464,10 +469,19 @@ More keybinds. We'll set up keybinds for using projectile to find an arbitrary f
 
 I also like to bind compile to =f5=, which seems to be standard practice for some reason. Personally, I have a custom compile command for each project that is set in =.dir-locals.el= at the project root, and I almost never want to type in a custom command, so I set =compile-command= as a directory variable and prevent compile from asking for a separate command. I also like to have the output scroll so I can glance over and quickly see if everything's going okay.
 #+BEGIN_SRC emacs-lisp  
-  (global-set-key (kbd "<f5>") (lambda ()
-                     (interactive)
-                     (setq-local compilation-read-command nil)
-                     (call-interactively 'compile)))
+  (defcustom main-compile-command nil
+    "Shell command used for main project compilation."
+    :type 'string
+    :group 'tom-custom)
+  (put 'main-compile-command 'safe-local-variable #'stringp)
+
+  (defun main-compile-project ()
+    (interactive)
+    (setq-local compilation-read-command nil)
+    (compile main-compile-command))
+
+  (global-set-key (kbd "<f5>") 'main-compile-project)
+ 
   (setq compilation-scroll-output 1)
 #+END_SRC
 
@@ -609,12 +623,12 @@ Obviously, we want to use visual-line-mode, because you'd have to be a nut to hi
 
 We also want to use =latexmk= by default, because there is absolutely no reason not to. Running one command instead of four is pretty cool in my book. Note that the hook for adding =latexmk= to the command list really doesn't seem to work well and should be redone.
 #+BEGIN_SRC emacs-lisp  
-(add-hook 'LaTeX-mode-hook (lambda ()
-  (push
-    '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
-      :help "Run latexmk on file")
-    TeX-command-list)))
-(add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk")))
+  (add-hook 'LaTeX-mode-hook (lambda ()
+    (add-to-ordered-list
+      '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
+        :help "Run latexmk on file")
+      TeX-command-list)))
+  (add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk")))
 #+END_SRC
 
 ** RefTeX setup
@@ -837,6 +851,25 @@ I find myself needing to check various environment values a lot. I can never rem
   (global-set-key (kbd "C-c e") 'tb-info-hydra/body)
 #+END_SRC
 
+** Utility Functions
+There are a bunch of utility things like the calendar, the journal, and the calculator that are useful, but I can never remember the keybinds for them. It makes more sense to me to package all these into one hydra so I can forget just one keybind.
+#+BEGIN_SRC emacs-lisp
+  (defhydra tb-utility-hydra (:color blue :hint nil)
+  "
+  Desk utilities:
+  ----------
+  _c_: calculator
+  _d_: calendar
+  _j_: New journal entry
+  "
+  ("c" calc)
+  ("d" calendar)
+  ("j" org-journal-new-entry)
+  )
+
+  (global-set-key (kbd "C-c u") 'tb-utility-hydra/body)
+#+END_SRC
+
 ** Configuration functions
 I tinker with this config a lot, so let's make a hydra to access and reload it quickly, as well as bringing up the package menu to check on new packages.
 #+BEGIN_SRC emacs-lisp
@@ -859,7 +892,7 @@ I tinker with this config a lot, so let's make a hydra to access and reload it q
   (global-set-key (kbd "C-c c") 'tb-config-hydra/body)
 #+END_SRC
 
-** Org-mode outline navigation
+ ** Org-mode outline navigation
 This hydra is copy-pasted straight from the wiki. Seems like a great way to bounce around a big org-mode file.
 #+BEGIN_SRC emacs-lisp
   (defhydra hydra-outline (:color pink :hint nil)
@@ -898,6 +931,26 @@ This hydra is copy-pasted straight from the wiki. Seems like a great way to boun
   (global-set-key (kbd "C-c o") 'hydra-outline/body) ; by example
 #+END_SRC
 
+* Tramp setup
+Editing remote files locally is awesome, but Tramp errors can be really frustrating to troubleshoot and I'll try to note fixes here. This block is to make sure that tramp uses ssh as the default method and that it recognizes a wider range of prompts.
+#+BEGIN_SRC emacs-lisp
+  (setq tramp-default-method "ssh")
+  (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
+#+END_SRC
+
+iTerm2's shell integration feature, which I use cheerfully, adds a line into your .bash_profile on any host you install it on (including remote hosts) to run its scripts.
+
+#+BEGIN_SRC shell-script :tangle no
+  test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+#+END_SRC
+
+That's great, but it involves changing around the =PS1= environment variable, which can mess up Tramp badly. To fix it, make sure you don't call the iTerm script in a dumb terminal, which is what tramp uses to communicate with ssh. Change that last line on the .bash_profile to:
+#+BEGIN_SRC shell-script :tangle no
+  if [ ${TERM} == 'xterm-256color']
+  then
+      test -e "${HOME}/.iterm2_shell_integration.bash" && source "${HOME}/.iterm2_shell_integration.bash"
+  fi
+#+END_SRC
 * Last-minute setup
 We don't really want all of this stuff in the open configuration, so let's load a separate file with things like cached passwords and ssh identities.
 #+BEGIN_SRC emacs-lisp
