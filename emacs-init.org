@@ -801,6 +801,14 @@ The LilyPond package is not on the normal package manager, so we'll have to load
 
   (add-hook 'LilyPond-mode-hook (lambda () (turn-on-font-lock)))
 #+END_SRC
+** Jabber mode
+A few useful options for using Emacs as a Google Talk client.
+#+BEGIN_SRC emacs-lisp
+  (setq jabber-history-enabled t)
+  (setq jabber-use-global-history nil)
+  (setq jabber-backlog-number 40)
+  (setq jabber-backlog-days 30)
+#+END_SRC
 * Hydra setup
 [[https://github.com/abo-abo/hydra][Hydra]] is a fascinating package that creates miniature user-defined modal menus. There seems to be no end of useful stuff for it to do, but I've just gotten into it, so there's not a whole lot for now. Several of these are taken from https://github.com/abo-abo/hydra/wiki/Emacs, the Hydra wiki.
 
