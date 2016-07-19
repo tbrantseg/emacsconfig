@@ -20,7 +20,7 @@ Keybindings defined in this configuration:
 | Key   | Function                                      | Mode         |
 |-------+-----------------------------------------------+--------------|
 | M-f10 | Show or hide line numbers in current file     | Global       |
-| C-c g | magit status for current project              | Any git repo |
+| C-x g | magit status for current project              | Any git repo |
 | f4    | Regenerate compilation database for rtags     | C/C++        |
 | f5    | Compile project                               | C/C++        |
 | f6    | Switch between header/implementation files    | C/C++        |
@@ -255,11 +255,7 @@ Also add a keybind for toggling line numbers as needed.
 (global-set-key (kbd "<M-f10>") 'nlinum-mode)
 #+END_SRC
 ** Other global keybinds and settings
-=which-key= mode is awesome, and great for actually remembering keybindings.
-#+BEGIN_SRC emacs-lisp
-;  (require 'which-key)
-;  (which-key-mode)
-#+END_SRC
+Place commonly used global keybindings here.
 
 With that, we're through the general setup. Up next, Helm.
 
@@ -271,6 +267,7 @@ First, of course, we've got to load the thing.
 #+BEGIN_SRC emacs-lisp  
   (require 'helm)
   (require 'helm-config)
+  (helm-mode 1)
 #+END_SRC
 
 ** Keybinds
@@ -402,7 +399,7 @@ Projectile is utterly fantastic and is an indispensable tool for any project of 
 ** Magit
 Precisely what we said above about Projectile. Magit is almost perfect out of the box, so the only line here is binding a key to =magit-status=. We also want to make sure it can find the MacPorts install of git, so we'll specify the path
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-c g") 'magit-status)
+  (global-set-key (kbd "C-x g") 'magit-status)
 #+END_SRC
 
 * Useful global modes setup
@@ -465,6 +462,8 @@ More keybinds. We'll set up keybinds for using projectile to find an arbitrary f
   (define-key c++-mode-map [f7] 'projectile-find-other-file-other-window)
   (define-key c-mode-map [(tab)] 'company-complete)
   (define-key c++-mode-map [(tab)] 'company-complete)
+  (define-key c++-mode-map (kbd "M-RET") 'comment-indent-new-line)
+  (define-key c-mode-map (kbd "M-RET") 'comment-indent-new-line)
 #+END_SRC
 
 I also like to bind compile to =f5=, which seems to be standard practice for some reason. Personally, I have a custom compile command for each project that is set in =.dir-locals.el= at the project root, and I almost never want to type in a custom command, so I set =compile-command= as a directory variable and prevent compile from asking for a separate command. I also like to have the output scroll so I can glance over and quickly see if everything's going okay.
@@ -594,9 +593,9 @@ We also want to use =company-anaconda= for python completion - it provides excel
 ** IPython
 IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
  #+BEGIN_SRC emacs-lisp  
-   (setq-default py-shell-name "/opt/local/bin/ipython")
-   (setq-default py-which-bufname "IPython")
-   (setq python-shell-interpreter "ipython")
+   ;(setq-default py-shell-name "/opt/local/bin/ipython")
+   ;(setq-default py-which-bufname "IPython")
+   ;(setq python-shell-interpreter "ipython")
  #+END_SRC
 
 ** Miscellaneous Python behaviors
@@ -756,6 +755,21 @@ Babel is pretty amazing, particularly when used in org-latex to generate figures
 (add-hook 'org-mode-hook 'my-babel-languages)
 #+END_SRC
 
+It's also common to use CSV files as tables for org-babel work, so I'll add this function from this Stack Overflow thread to enable it more easily:
+#+BEGIN_SRC emacs-lisp
+  (defun insert-csv-file-as-org-table (filename)
+    "Insert a file into the current buffer at point, and convert it to an org table."
+    (interactive (list (read-file-name "csv file: ")))
+    (let* ((start (point))
+      (end (+ start (nth 1 (insert-file-contents filename)))))
+      (org-table-convert-region start end)))
+
+  (defun org-mode-keybind-hook ()
+    (local-set-key (kbd "C-c f") 'insert-csv-file-as-org-table))
+
+  (add-hook 'org-mode-hook 'org-mode-keybind-hook)
+#+END_SRC
+
 The asking if you *really* want to execute a code block makes sense, but it's annoying for these languages, so let's turn it off.
 #+BEGIN_SRC emacs-lisp  
 (defun my-org-confirm-babel-evaluate (lang body)
@@ -900,7 +914,7 @@ I tinker with this config a lot, so let's make a hydra to access and reload it q
   (global-set-key (kbd "C-c c") 'tb-config-hydra/body)
 #+END_SRC
 
- ** Org-mode outline navigation
+** Org-mode outline navigation
 This hydra is copy-pasted straight from the wiki. Seems like a great way to bounce around a big org-mode file.
 #+BEGIN_SRC emacs-lisp
   (defhydra hydra-outline (:color pink :hint nil)
@@ -981,3 +995,4 @@ And that's it! Every time you save this file, it will automatically create and c
 # End:
 
 # emacs-init.org ends here
+
