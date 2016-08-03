@@ -742,17 +742,18 @@ As stated earlier, I think this makes the business with reftex earlier obsolete.
 ** Org-babel setup
 Babel is pretty amazing, particularly when used in org-latex to generate figures inline with various languages. For some reason none of these are turned on by default though, so let's allow it to execute code blocks in Dot, ditaa, Python, gnuplot, and PlantUML.
 #+BEGIN_SRC emacs-lisp  
-(defun my-babel-languages ()
-  (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
-  (org-babel-do-load-languages   
-   'org-babel-load-languages
-   '((dot . t)
-     (ditaa . t)
-     (python . t)
-     (gnuplot . t)
-     (plantuml . t)
-     (python . t))))
-(add-hook 'org-mode-hook 'my-babel-languages)
+  (defun my-babel-languages ()
+    (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
+    (org-babel-do-load-languages   
+     'org-babel-load-languages
+     '((dot . t)
+       (ditaa . t)
+       (python . t)
+       (sh . t)
+       (gnuplot . t)
+       (plantuml . t)
+       (python . t))))
+  (add-hook 'org-mode-hook 'my-babel-languages)
 #+END_SRC
 
 It's also common to use CSV files as tables for org-babel work, so I'll add this function from this Stack Overflow thread to enable it more easily:
@@ -773,7 +774,7 @@ It's also common to use CSV files as tables for org-babel work, so I'll add this
 The asking if you *really* want to execute a code block makes sense, but it's annoying for these languages, so let's turn it off.
 #+BEGIN_SRC emacs-lisp  
 (defun my-org-confirm-babel-evaluate (lang body)
-  (not (member lang '("ditaa" "dot" "plantuml" "python" "gnuplot"))))
+  (not (member lang '("ditaa" "dot" "plantuml" "python" "sh" "gnuplot"))))
 (setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
 #+END_SRC
 
@@ -822,6 +823,16 @@ A few useful options for using Emacs as a Google Talk client.
   (setq jabber-use-global-history nil)
   (setq jabber-backlog-number 40)
   (setq jabber-backlog-days 30)
+#+END_SRC
+** IDL mode
+IDL is useful, but it has the annoying feature of being proprietary. Luckily the GDL open source clone is advanced enough where it can basically substitute for IDL straight-up; we just need a bit of tweaking for emacs to find it.
+#+BEGIN_SRC emacs-lisp
+  (setq idlwave-reserved-word-upcase t)
+  (setq idlwave-shell-explicit-file-name "gdl")
+  (setq idlwave-library-path
+        '("+/opt/local/share/gnudatalanguage"
+          "+/soft/GDL/coyote"
+          "+/soft/GDL/pro"))
 #+END_SRC
 * Hydra setup
 [[https://github.com/abo-abo/hydra][Hydra]] is a fascinating package that creates miniature user-defined modal menus. There seems to be no end of useful stuff for it to do, but I've just gotten into it, so there's not a whole lot for now. Several of these are taken from https://github.com/abo-abo/hydra/wiki/Emacs, the Hydra wiki.
