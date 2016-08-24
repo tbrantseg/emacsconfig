@@ -683,6 +683,7 @@ This might be the biggest section of them all. Let's start by requiring every or
   (require 'org)
   (require 'ox-latex)
   (require 'ob)
+  (require 'ob-ipython)
   (require 'org-journal)
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 #+END_SRC
@@ -747,8 +748,10 @@ Babel is pretty amazing, particularly when used in org-latex to generate figures
     (org-babel-do-load-languages   
      'org-babel-load-languages
      '((dot . t)
+       (emacs-lisp t)
        (ditaa . t)
        (python . t)
+       (ipython . t)
        (sh . t)
        (gnuplot . t)
        (plantuml . t)
@@ -774,7 +777,7 @@ It's also common to use CSV files as tables for org-babel work, so I'll add this
 The asking if you *really* want to execute a code block makes sense, but it's annoying for these languages, so let's turn it off.
 #+BEGIN_SRC emacs-lisp  
 (defun my-org-confirm-babel-evaluate (lang body)
-  (not (member lang '("ditaa" "dot" "plantuml" "python" "sh" "gnuplot"))))
+  (not (member lang '("ditaa" "dot" "plantuml" "ipython" "python" "sh" "gnuplot"))))
 (setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
 #+END_SRC
 
@@ -887,16 +890,23 @@ I find myself needing to check various environment values a lot. I can never rem
 ** Utility Functions
 There are a bunch of utility things like the calendar, the journal, and the calculator that are useful, but I can never remember the keybinds for them. It makes more sense to me to package all these into one hydra so I can forget just one keybind.
 #+BEGIN_SRC emacs-lisp
+  (defun tb-gchat-helper ()
+    (interactive)
+    (jabber-connect-all)
+    (call-interactively 'jabber-chat-with))
+
   (defhydra tb-utility-hydra (:color blue :hint nil)
   "
   Desk utilities:
   ----------
   _c_: calculator
   _d_: calendar
+  _g_: Google Talk with...
   _j_: New journal entry
   "
   ("c" calc)
   ("d" calendar)
+  ("g" jabber-connect-all)
   ("j" org-journal-new-entry)
   )
 
