@@ -1,0 +1,14 @@
+* IPython blocks
+Set up inline plotting for matplotlib.
+Call with =#+CALL: ipython-plot-setup()=.
+
+#+NAME: ipython-plot-setup
+#+BEGIN_SRC ipython :session :exports nil :results silent
+  %matplotlib inline
+  import matplotlib.pyplot as mpl
+  import numpy as np
+  import matplotlib
+  matplotlib.rcParams['text.usetex']=True
+  matplotlib.rcParams['font.family']='serif'
+  matplotlib.rcParams['figure.autolayout']=True
+#+END_SRC

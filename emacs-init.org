@@ -141,6 +141,8 @@ This bit of code stores all backup and auto-save files in one location, includin
   (setq kept-new-versions 5)
   (setq kept-old-versions 2)
 #+END_SRC
+
+** Temporary files
 ** Package management
 I am not sure if having three package management archives is a good idea. It probably isn't, but untangling that mess that I have probably made is beyond my patience at the moment, so here we are.
 #+BEGIN_SRC emacs-lisp
@@ -593,9 +595,8 @@ We also want to use =company-anaconda= for python completion - it provides excel
 ** IPython
 IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
  #+BEGIN_SRC emacs-lisp  
-   ;(setq-default py-shell-name "/opt/local/bin/ipython")
-   ;(setq-default py-which-bufname "IPython")
-   ;(setq python-shell-interpreter "ipython")
+   (setq python-shell-interpreter "ipython"
+         python-shell-interpreter-args "--simple-prompt -i")
  #+END_SRC
 
 ** Miscellaneous Python behaviors
@@ -606,6 +607,9 @@ Mainly stuff with switching to execute buffers when we run a bit of code in the 
   (setq py-switch-buffers-on-execute-p t)
   (setq py-split-windows-on-execute-p nil)
   (setq py-smart-indentation t)
+  (setq ob-ipython-command "ipython --simple-prompt")
+  (add-hook 'python-mode-hook
+            '(lambda () (define-key python-mode-map (kbd "M-<tab>") 'ob-ipython-inspect)))
 #+END_SRC
 * LaTeX mode setup
 ** Mode hooks
@@ -779,6 +783,13 @@ The asking if you *really* want to execute a code block makes sense, but it's an
 (defun my-org-confirm-babel-evaluate (lang body)
   (not (member lang '("ditaa" "dot" "plantuml" "ipython" "python" "sh" "gnuplot"))))
 (setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
+#+END_SRC
+
+Finally, we'll make use of the org-babel Library of Babel feature, which lets us store commonly used code blocks and call them from anywhere
+#+BEGIN_SRC emacs-lisp
+  (defun my-library-of-babel-setup ()
+    (setq org-babel-lob-files '("~/emacs-init/code-blocks.org")))
+  (add-hook 'org-mode-hook 'my-library-of-babel-setup)
 #+END_SRC
 
 ** Org-agenda setup
