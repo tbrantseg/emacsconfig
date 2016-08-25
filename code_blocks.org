@@ -3,7 +3,7 @@ Set up inline plotting for matplotlib.
 Call with =#+CALL: ipython-plot-setup()=.
 
 #+NAME: ipython-plot-setup
-#+BEGIN_SRC ipython :session :exports nil :results silent
+#+BEGIN_SRC ipython :session :exports code :results silent
   %matplotlib inline
   import matplotlib.pyplot as mpl
   import numpy as np
