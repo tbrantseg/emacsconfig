@@ -1,4 +1,5 @@
 * IPython blocks
+** ipython-plot-setup
 Set up inline plotting for matplotlib.
 Call with =#+CALL: ipython-plot-setup()=.
 
@@ -7,8 +8,18 @@ Call with =#+CALL: ipython-plot-setup()=.
   %matplotlib inline
   import matplotlib.pyplot as mpl
   import numpy as np
+  import pandas as pd
   import matplotlib
   matplotlib.rcParams['text.usetex']=True
   matplotlib.rcParams['font.family']='serif'
   matplotlib.rcParams['figure.autolayout']=True
 #+END_SRC
+
+* Bash blocks
+** get-data
+General-purpose block to get data from a file.
+#+NAME: get_data
+#+BEGIN_SRC sh :exports code :results silent :var HOSTNAME="" :var FILENAME=""
+  ssh $HOSTNAME "cat $FILENAME"
+#+END_SRC
+

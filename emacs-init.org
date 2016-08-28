@@ -523,8 +523,13 @@ We also want to make sure we can actually use rtags for completion in a file. Th
 #+END_SRC
 
 Finally, let's start the server, but make sure only one instance is running. I think in older versions this had to be done manually in a terminal (ick) but thankfully it's done entirely internally now.
-#+BEGIN_SRC emacs-lisp  
-  (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
+#+BEGIN_SRC emacs-lisp
+  (defun rtags-start-unless-running-or-remote ()
+    "Wrapper around rtags-start-process-unless-running to avoid problems with remote files"
+    (unless (file-remote-p default-directory)
+      'rtags-start-process-maybe))
+
+  (add-hook 'c++-mode-hook 'rtags-start-unless-running-or-remote)
 #+END_SRC
 
 ** Rtags for syntax checking
