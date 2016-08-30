@@ -149,7 +149,7 @@ I am not sure if having three package management archives is a good idea. It pro
   (require 'package)
   (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
                             ("marmalade" . "http://marmalade-repo.org/packages/")
-                            ("melpa" . "http://melpa.milkbox.net/packages/")))
+                            ("melpa" . "http://melpa.org/packages/")))
   (package-initialize)
 #+END_SRC
 
@@ -524,12 +524,7 @@ We also want to make sure we can actually use rtags for completion in a file. Th
 
 Finally, let's start the server, but make sure only one instance is running. I think in older versions this had to be done manually in a terminal (ick) but thankfully it's done entirely internally now.
 #+BEGIN_SRC emacs-lisp
-  (defun rtags-start-unless-running-or-remote ()
-    "Wrapper around rtags-start-process-unless-running to avoid problems with remote files"
-    (unless (file-remote-p default-directory)
-      'rtags-start-process-maybe))
-
-  (add-hook 'c++-mode-hook 'rtags-start-unless-running-or-remote)
+  (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
 #+END_SRC
 
 ** Rtags for syntax checking
@@ -945,7 +940,7 @@ I tinker with this config a lot, so let's make a hydra to access and reload it q
   ("c" (find-file "~/emacs-init/emacs-init.org"))
   ("e" (find-file "~/.emacs"))
   ("r" (load-file "~/emacs-init/emacs-init.el"))
-  ("p" list-packages)
+  ("p" paradox-list-packages)
   ("g" customize-group))
 
   (global-set-key (kbd "C-c c") 'tb-config-hydra/body)
@@ -1032,4 +1027,3 @@ And that's it! Every time you save this file, it will automatically create and c
 # End:
 
 # emacs-init.org ends here
-
