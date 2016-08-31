@@ -257,7 +257,10 @@ Also add a keybind for toggling line numbers as needed.
 (global-set-key (kbd "<M-f10>") 'nlinum-mode)
 #+END_SRC
 ** Other global keybinds and settings
-Place commonly used global keybindings here.
+Add in a keybind for viewing files in read-only mode, which for some reason doesn't have a default key binding.
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-M-f C-M-x") 'view-file)
+#+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
 
