@@ -103,6 +103,12 @@ The splash screen is kind of pointless and we don't need to see it every time.
   (setq inhibit-startup-screen t)
 #+END_SRC
 
+We'll also load some commonly-used function libraries right away to guard against any dependency weirdness
+#+BEGIN_SRC emacs-lisp
+  (require 'cl)
+  (require 'dash)
+#+END_SRC
+
 ** Name and email
 My default name isn't ever quite right, so we'll just make sure it's set correctly.
 #+BEGIN_SRC emacs-lisp
@@ -148,7 +154,7 @@ I am not sure if having three package management archives is a good idea. It pro
 #+BEGIN_SRC emacs-lisp
   (require 'package)
   (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                            ("marmalade" . "http://marmalade-repo.org/packages/")
+;                            ("marmalade" . "http://marmalade-repo.org/packages/")
                             ("melpa" . "http://melpa.org/packages/")))
   (package-initialize)
 #+END_SRC
@@ -259,7 +265,7 @@ Also add a keybind for toggling line numbers as needed.
 ** Other global keybinds and settings
 Add in a keybind for viewing files in read-only mode, which for some reason doesn't have a default key binding.
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-M-f C-M-x") 'view-file)
+  (global-set-key (kbd "C-M-x C-M-f") 'view-file)
 #+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
@@ -901,6 +907,20 @@ I find myself needing to check various environment values a lot. I can never rem
   (global-set-key (kbd "C-c e") 'tb-info-hydra/body)
 #+END_SRC
 
+** Search
+#+BEGIN_SRC emacs-lisp
+  (defhydra tb-grep-hydra (:color blue :hint nil)
+  "
+  Search functions:
+  ----------------
+  _d_: Grep in directory...
+  _p_: Grep in project...
+  "
+  ("p" projectile-grep)
+  ("d" find-grep-dired))
+
+  (global-set-key (kbd "C-c f") 'tb-grep-hydra/body)
+#+END_SRC
 ** Utility Functions
 There are a bunch of utility things like the calendar, the journal, and the calculator that are useful, but I can never remember the keybinds for them. It makes more sense to me to package all these into one hydra so I can forget just one keybind.
 #+BEGIN_SRC emacs-lisp
@@ -1021,6 +1041,7 @@ Also, while =debug-on-error= is nice while loading, it's really irritating while
 * End
 So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
 #+BEGIN_SRC emacs-lisp
+  (message "emacs-init.el finished loading!")
   (provide 'emacs-init)
 #+END_SRC
 And that's it! Every time you save this file, it will automatically create and compile =emacs-init.el=, and =.emacs= will load the configuration from that file on startup.
