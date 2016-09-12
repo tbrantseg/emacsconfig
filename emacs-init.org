@@ -103,10 +103,23 @@ The splash screen is kind of pointless and we don't need to see it every time.
   (setq inhibit-startup-screen t)
 #+END_SRC
 
+I also like to change the startup message to something a little more useful.
+#+BEGIN_SRC emacs-lisp
+  (setq initial-scratch-message
+        (concat
+         (concat ";; GNU Emacs " emacs-version  "\n")
+         (concat ";; Build system: " system-configuration "\n\n")
+          ";; C-j: Evaluate Lisp expression within this buffer\n\n"
+          ";; C-x b: Select buffer menu\n"
+          ";; C-x f: Create file\n"
+          ";; C-c u: Desk utilities menu\n"
+          ";; C-c p p: Jump to project\n"
+          ";; C-c c: Emacs config menu\n\n"))
+#+END_SRC
+
 We'll also load some commonly-used function libraries right away to guard against any dependency weirdness
 #+BEGIN_SRC emacs-lisp
   (require 'cl)
-  (require 'dash)
 #+END_SRC
 
 ** Name and email
@@ -266,6 +279,7 @@ Also add a keybind for toggling line numbers as needed.
 Add in a keybind for viewing files in read-only mode, which for some reason doesn't have a default key binding.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-M-x C-M-f") 'view-file)
+  (require 'dash)
 #+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
@@ -798,7 +812,7 @@ Finally, we'll make use of the org-babel Library of Babel feature, which lets us
 #+BEGIN_SRC emacs-lisp
   (defun my-library-of-babel-setup ()
     (setq org-babel-lob-files '("~/emacs-init/code-blocks.org")))
-  (add-hook 'org-mode-hook 'my-library-of-babel-setup)
+  (add-hook 'after-init-hook #'my-library-of-babel-setup)
 #+END_SRC
 
 ** Org-agenda setup
