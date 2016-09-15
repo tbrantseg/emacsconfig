@@ -42,12 +42,12 @@ This config has been tested to work with Emacs 24 (MacPorts and Emacs.app), the 
 #+BEGIN_SRC sh :tangle no
   sudo port -v install emacs-app
 #+END_SRC
+
 - To get vanilla Emacs from [[http://www.emacsformacosx.com][Emacs For Mac OS X]], just click the big download button. They also have pretest and nightly builds available.
 - I've been using the master branch (25.1) of the main Emacs git repo at [[https://github.com/emacs-mirror/emacs]]. To build this, clone the git repo with 
 #+BEGIN_SRC sh :tangle no
   git clone https://github.com/emacs/mirror/emacs.git
 #+END_SRC
-
 then change to the =emacs= directory and run
 #+BEGIN_SRC sh :tangle no
   ./autogen.sh
@@ -55,7 +55,6 @@ then change to the =emacs= directory and run
   make
   make install
 #+END_SRC
-
 to build. The final product should be in =emacs/nextstep/Emacs.app=, which you can just move to your Applications folder.
 
 *** Init files (this repo)
@@ -108,7 +107,9 @@ I also like to change the startup message to something a little more useful.
   (setq initial-scratch-message
         (concat
          (concat ";; GNU Emacs " emacs-version  "\n")
-         (concat ";; Build system: " system-configuration "\n\n")
+         (concat ";; Build system: " system-configuration "\n")
+         (concat ";; Build date/time: "
+                 (format-time-string "%Y-%m-%d %T" emacs-build-time) "\n\n")
           ";; C-j: Evaluate Lisp expression within this buffer\n\n"
           ";; C-x b: Select buffer menu\n"
           ";; C-x f: Create file\n"
@@ -117,7 +118,7 @@ I also like to change the startup message to something a little more useful.
           ";; C-c c: Emacs config menu\n\n"))
 #+END_SRC
 
-We'll also load some commonly-used function libraries right away to guard against any dependency weirdness
+We'll also load some commonly-used function libraries right away to guard against any dependency weirdness.
 #+BEGIN_SRC emacs-lisp
   (require 'cl)
 #+END_SRC
@@ -221,10 +222,9 @@ I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line
 ** Terminal appearance
 There are times when it's handy to open a quick emacs session in a terminal, for whatever reason. However, there are a few different display things - the line numbers tend to display right up against text, which is hard to read, and I am so used to using the trackpad to scroll that it always throws me off. We also can get rid of the menu bar, since accessing it in the terminal is a huge pain.
 #+BEGIN_SRC emacs-lisp  
+  (setq nlinum-format "%d ")
   (unless window-system
     (osx-clipboard-mode)
-    (menu-bar-mode -1)
-    (setq nlinum-format "%d ")
     (require 'mouse)
     (xterm-mouse-mode t)
     (global-set-key [mouse-4] (lambda ()
@@ -280,6 +280,11 @@ Add in a keybind for viewing files in read-only mode, which for some reason does
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-M-x C-M-f") 'view-file)
   (require 'dash)
+#+END_SRC
+
+Finally we'll set the initial size of the frame. I always maximize the window right away anyway, so I may as well do this automatically.
+#+BEGIN_SRC emacs-lisp
+  (toggle-frame-maximized)
 #+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
@@ -712,6 +717,8 @@ This might be the biggest section of them all. Let's start by requiring every or
   (require 'ob)
   (require 'ob-ipython)
   (require 'org-journal)
+  ; Temporarily required to fix the ipython console in org-ipython mode
+  (setenv "JUPYTER_CONSOLE_TEST" "1")
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 #+END_SRC
 
@@ -811,7 +818,7 @@ The asking if you *really* want to execute a code block makes sense, but it's an
 Finally, we'll make use of the org-babel Library of Babel feature, which lets us store commonly used code blocks and call them from anywhere
 #+BEGIN_SRC emacs-lisp
   (defun my-library-of-babel-setup ()
-    (setq org-babel-lob-files '("~/emacs-init/code-blocks.org")))
+    (org-babel-lob-ingest "~/emacs-init/code_blocks.org"))
   (add-hook 'after-init-hook #'my-library-of-babel-setup)
 #+END_SRC
 
@@ -833,6 +840,7 @@ We also want to set convenient keybinds for linking to items and calling up the 
 (define-key global-map "\C-cl" 'org-store-link)
 (define-key global-map "\C-ca" 'org-agenda)
 #+END_SRC
+
 * Miscellaneous modes setup
 ** Makefile mode
 Right now, this is just ensuring that Makefiles have tabs used instead of spaces for indentation, because of Makefile syntax's wonky requirements about tabs.
@@ -853,6 +861,7 @@ The LilyPond package is not on the normal package manager, so we'll have to load
 
   (add-hook 'LilyPond-mode-hook (lambda () (turn-on-font-lock)))
 #+END_SRC
+
 ** Jabber mode
 A few useful options for using Emacs as a Google Talk client.
 #+BEGIN_SRC emacs-lisp
@@ -861,6 +870,7 @@ A few useful options for using Emacs as a Google Talk client.
   (setq jabber-backlog-number 40)
   (setq jabber-backlog-days 30)
 #+END_SRC
+
 ** IDL mode
 IDL is useful, but it has the annoying feature of being proprietary. Luckily the GDL open source clone is advanced enough where it can basically substitute for IDL straight-up; we just need a bit of tweaking for emacs to find it.
 #+BEGIN_SRC emacs-lisp
@@ -871,6 +881,7 @@ IDL is useful, but it has the annoying feature of being proprietary. Luckily the
           "+/soft/GDL/coyote"
           "+/soft/GDL/pro"))
 #+END_SRC
+
 * Hydra setup
 [[https://github.com/abo-abo/hydra][Hydra]] is a fascinating package that creates miniature user-defined modal menus. There seems to be no end of useful stuff for it to do, but I've just gotten into it, so there's not a whole lot for now. Several of these are taken from https://github.com/abo-abo/hydra/wiki/Emacs, the Hydra wiki.
 
