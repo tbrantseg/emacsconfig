@@ -465,6 +465,92 @@ And, breaking my rule about mode-specific configuration coming later, here's som
                                                        ("* ||\n[i]" "RET"))))
 #+END_SRC
 
+* Mail
+We'll take another shot at using =mu4e= and =mbsync= to do email through Emacs.
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path (expand-file-name "/opt/local/share/emacs/site-lisp/mu4e/"))
+  (require 'mu4e)
+  (setq mu4e-maildir "/Users/tbrantse/Maildir")
+  (setq mu4e-get-mail-command "/opt/local/bin/mbsync -a")
+#+END_SRC
+
+To use =eww= to render HTML mail, we can use [[http://emacs.stackexchange.com/questions/3051/how-can-i-use-eww-as-a-renderer-for-mu4e][this Stack exchange thread]]:
+#+BEGIN_SRC emacs-lisp
+(defun my-render-html-message ()
+  (let ((dom (libxml-parse-html-region (point-min) (point-max))))
+    (erase-buffer)
+    (shr-insert-document dom)
+    (goto-char (point-min))))
+
+(setq mu4e-html2text-command 'my-render-html-message)
+#+END_SRC
+
+Finally, we'll want to set things up to play nice with multiple accounts, from [[http://emacs.stackexchange.com/questions/10884/mu4e-multiple-accounts][another Stack exchange thread]]:
+#+BEGIN_SRC emacs-lisp
+  (defun my-mu4e-set-account ()
+    "Set the account for composing a message."
+    (let* ((account
+            (if mu4e-compose-parent-message
+                (let ((maildir (mu4e-message-field mu4e-compose-parent-message :maildir)))
+                  (string-match "/\\(.*?\\)/" maildir)
+                  (match-string 1 maildir))
+              (completing-read (format "Compose with account: (%s) "
+                                       (mapconcat #'(lambda (var) (car var))
+                                                  my-mu4e-account-alist "/"))
+                               (mapcar #'(lambda (var) (car var)) my-mu4e-account-alist)
+                               nil t nil nil (caar my-mu4e-account-alist))))
+           (account-vars (cdr (assoc account my-mu4e-account-alist))))
+      (if account-vars
+          (mapc #'(lambda (var)
+                    (set (car var) (cadr var)))
+                account-vars)
+        (error "No email account found"))))
+
+  ;; ask for account when composing mail
+  (add-hook 'mu4e-compose-pre-hook 'my-mu4e-set-account)
+
+  ; Default value
+  (setq mu4e-sent-folder "/iastate/sent")
+  (setq mu4e-drafts-folder "/iastate/drafts")
+  (setq mu4e-trash-folder "/iastate/trash")
+  (setq mu4e-refile-folder "/iastate/archive")
+
+  (defvar my-mu4e-account-alist
+    '(("gmail"
+       (user-mail-address  "tom.brantseg@gmail.com")
+       (user-full-name     "Tom Brantseg")
+       (mu4e-sent-folder   "/gmail/sent")
+       (mu4e-drafts-folder "/gmail/drafts")
+       (mu4e-trash-folder  "/gmail/trash")
+       (mu4e-refile-folder "/gmail/archive"))
+      ("iastate"
+       (user-mail-address  "tbrantse@iastate.edu")
+       (user-full-name     "Thomas Brantseg")
+       (mu4e-sent-folder   "/iastate/sent")
+       (mu4e-drafts-folder "/iastate/draft")
+       (mu4e-trash-folder  "/iastate/trash")
+       (mu4e-refile-folder "/iastate/archive"))))
+
+  (setq mu4e-user-mail-address-list
+        (mapcar (lambda (account) (cadr (assq 'user-mail-address account)))
+                my-mu4e-account-alist))
+#+END_SRC
+
+Finally we'll use =msmtp= to send mail.
+#+BEGIN_SRC emacs-lisp
+; use msmtp
+(setq message-send-mail-function 'message-send-mail-with-sendmail)
+(setq sendmail-program "/opt/local/bin/msmtp")
+; tell msmtp to choose the SMTP server according to the from field in the outgoing email
+(setq message-sendmail-f-is-evil 't)
+(setq message-sendmail-extra-arguments '("--read-envelope-from"))
+#+END_SRC
+
+Finally finally, we'll set mu4e to automatically update every five minutes.
+#+BEGIN_SRC emacs-lisp
+(setq mu4e-update-interval 300)
+#+END_SRC
+
 * C++ mode setup
 ** Projectile hook
 #+BEGIN_SRC emacs-lisp
