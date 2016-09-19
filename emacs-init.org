@@ -466,7 +466,7 @@ And, breaking my rule about mode-specific configuration coming later, here's som
 #+END_SRC
 
 * Mail
-We'll take another shot at using =mu4e= and =mbsync= to do email through Emacs.
+I've decided to take a stab at doing this whole Email via emacs thing. We'll use =mbsync= to grab mail, =mu= to index it, and =mu4e= to read it.
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path (expand-file-name "/opt/local/share/emacs/site-lisp/mu4e/"))
   (require 'mu4e)
@@ -546,9 +546,10 @@ Finally we'll use =msmtp= to send mail.
 (setq message-sendmail-extra-arguments '("--read-envelope-from"))
 #+END_SRC
 
-Finally finally, we'll set mu4e to automatically update every five minutes.
+Finally finally, we'll set mu4e to automatically check for new mail and update the database every five minutes.
 #+BEGIN_SRC emacs-lisp
-(setq mu4e-update-interval 300)
+  (setq mu4e-change-filenames-when-moving t)
+  (setq mu4e-update-interval 300)
 #+END_SRC
 
 * C++ mode setup
@@ -1046,13 +1047,15 @@ There are a bunch of utility things like the calendar, the journal, and the calc
   ----------
   _c_: calculator
   _d_: calendar
-  _g_: Google Talk with...
+  _g_: Google Talk...
   _j_: New journal entry
+  _m_: Read email
   "
   ("c" calc)
   ("d" calendar)
   ("g" jabber-connect-all)
   ("j" org-journal-new-entry)
+  ("m" mu4e)
   )
 
   (global-set-key (kbd "C-c u") 'tb-utility-hydra/body)
