@@ -546,10 +546,18 @@ Finally we'll use =msmtp= to send mail.
 (setq message-sendmail-extra-arguments '("--read-envelope-from"))
 #+END_SRC
 
-Finally finally, we'll set mu4e to automatically check for new mail and update the database every five minutes.
+Finally finally, we'll set mu4e to automatically check for new mail and update the database every five minutes. The line about change file names when moving ensures that mbsync doesn't get confused when messages are refiled to different folders.
 #+BEGIN_SRC emacs-lisp
   (setq mu4e-change-filenames-when-moving t)
   (setq mu4e-update-interval 300)
+#+END_SRC
+
+And finally FINALLY finally, we'll use the =mu4e-alert= package to pop up a notification when we have a new message, then launch mu4e in the background.
+#+BEGIN_SRC emacs-lisp
+  (mu4e-alert-set-default-style 'notifier)
+  (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
+  (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
+  (mu4e 0)
 #+END_SRC
 
 * C++ mode setup
