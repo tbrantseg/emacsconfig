@@ -1084,7 +1084,7 @@ There are a bunch of utility things like the calendar, the journal, and the calc
   ("d" calendar)
   ("g" jabber-connect-all)
   ("j" org-journal-new-entry)
-  ("m" mu4e-alert-view-unread-emails)
+  ("m" (lambda() (interactive) (mu4e-alert-view-unread-mails)))
   )
 
   (global-set-key (kbd "C-c u") 'tb-utility-hydra/body)
