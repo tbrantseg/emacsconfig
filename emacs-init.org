@@ -729,8 +729,7 @@ We also want to use =company-anaconda= for python completion - it provides excel
 ** IPython
 IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
  #+BEGIN_SRC emacs-lisp  
-   (setq python-shell-interpreter "ipython"
-         python-shell-interpreter-args "--simple-prompt -i")
+   (setq python-shell-interpreter "ipython")
  #+END_SRC
 
 ** Miscellaneous Python behaviors
@@ -741,7 +740,7 @@ Mainly stuff with switching to execute buffers when we run a bit of code in the 
   (setq py-switch-buffers-on-execute-p t)
   (setq py-split-windows-on-execute-p nil)
   (setq py-smart-indentation t)
-  (setq ob-ipython-command "ipython --simple-prompt")
+  (setq ob-ipython-command "ipython")
   (add-hook 'python-mode-hook
             '(lambda () (define-key python-mode-map (kbd "M-<tab>") 'ob-ipython-inspect)))
 #+END_SRC
@@ -824,7 +823,6 @@ This might be the biggest section of them all. Let's start by requiring every or
   (require 'ob-ipython)
   (require 'org-journal)
   ; Temporarily required to fix the ipython console in org-ipython mode
-  (setenv "JUPYTER_CONSOLE_TEST" "1")
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 #+END_SRC
 
@@ -914,11 +912,9 @@ It's also common to use CSV files as tables for org-babel work, so I'll add this
   (add-hook 'org-mode-hook 'org-mode-keybind-hook)
 #+END_SRC
 
-The asking if you *really* want to execute a code block makes sense, but it's annoying for these languages, so let's turn it off.
+The asking if you *really* want to execute a code block makes sense, but it's annoying for these languages, and it breaks using code blocks as table formulas, so let's turn it off.
 #+BEGIN_SRC emacs-lisp  
-(defun my-org-confirm-babel-evaluate (lang body)
-  (not (member lang '("ditaa" "dot" "plantuml" "ipython" "python" "sh" "gnuplot"))))
-(setq org-confirm-babel-evaluate 'my-org-confirm-babel-evaluate)
+(setq org-confirm-babel-evaluate nil)
 #+END_SRC
 
 Finally, we'll make use of the org-babel Library of Babel feature, which lets us store commonly used code blocks and call them from anywhere
