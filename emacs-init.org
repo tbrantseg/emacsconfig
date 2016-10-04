@@ -260,15 +260,25 @@ I also am completely used to using the command key as meta, so let's bow to the 
 ** Line numbers
 Add line numbers to all of the modes that are likely to need them.
 #+BEGIN_SRC emacs-lisp  
-  (add-hook 'c++-mode-hook 'nlinum-mode)
-  (add-hook 'sql-mode-hook 'nlinum-mode)
-  (add-hook 'python-mode-hook 'nlinum-mode)
-  (add-hook 'LaTeX-mode-hook 'nlinum-mode)
-  (add-hook 'sh-mode-hook 'nlinum-mode)
-  (add-hook 'emacs-lisp-mode-hook 'nlinum-mode)
-  (add-hook 'autoconf-mode-hook 'nlinum-mode)
-  (add-hook 'makefile-mode-hook 'nlinum-mode)
-  (add-hook 'makefile-automake-mode-hook 'nlinum-mode)
+(defun my-add-to-multiple-hooks (function hooks)
+  (mapc (lambda (hook)
+          (add-hook hook function))
+        hooks))
+my-add-to-multiple-hooks
+
+
+(my-add-to-multiple-hooks
+ 'nlinum-mode
+ '(c++-mode-hook
+   sql-mode-hook
+   python-mode-hook
+   LaTeX-mode-hook
+   sh-mode-hook
+   emacs-lisp-mode-hook
+   autoconf-mode-hook
+   makefile-mode-hook
+   makefile-automake-mode-hook
+   ))
 #+END_SRC
 
 Also add a keybind for toggling line numbers as needed.
@@ -360,11 +370,13 @@ GTAGS is fairly useful, but helm makes it absolutely invaluable for navigating a
 First, we want to set it up for the modes where large projects tend to come up.
 #+BEGIN_SRC emacs-lisp  
   (require 'helm-gtags)
-  (add-hook 'dired-mode-hook 'helm-gtags-mode)
-  (add-hook 'eshell-mode-hook 'helm-gtags-mode)
-  (add-hook 'c-mode-hook 'helm-gtags-mode)
-  (add-hook 'c++-mode-hook 'helm-gtags-mode)
-  (add-hook 'asm-mode-hook 'helm-gtags-mode)
+  (my-add-to-multiple-hooks
+   'helm-gtags-mode
+   '(dired-mode-hook
+     eshell-mode-hook
+     c-mode-hook
+     c++-mode-hook
+     asm-mode-hook))
 #+END_SRC
 
 Next, just to make it that much easier to guess what you're looking for, some more variable tweaking.
@@ -395,25 +407,25 @@ I still don't know if I like CEDET. I like the *idea* of CEDET, but it's never q
 First we have to go through the usual round of =(require)=s:
 #+BEGIN_SRC emacs-lisp  
   (require 'cc-mode)
-  (require 'semantic)
-  (require 'semantic/ia)
-  (require 'semantic/bovine/gcc)
+  ;(require 'semantic)
+  ;(require 'semantic/ia)
+  ;(require 'semantic/bovine/gcc)
 #+END_SRC
 
 We want to use EDE and the semantic DB everywhere possible. The code summaries and sticky function tags are really nice, so we'll enable those too.
 #+BEGIN_SRC emacs-lisp  
-  (semantic-mode 1)
-  (global-ede-mode 1)
-  (global-semanticdb-minor-mode 1)
-  (global-semantic-idle-scheduler-mode 1)
-  (global-semantic-idle-summary-mode)
-  (add-to-list 'semantic-default-submodes 'global-semantic-stickyfunc-mode)
+  ;; (semantic-mode 1)
+  ;; (global-ede-mode 1)
+  ;; (global-semanticdb-minor-mode 1)
+  ;; (global-semantic-idle-scheduler-mode 1)
+  ;; (global-semantic-idle-summary-mode)
+  ;; (add-to-list 'semantic-default-submodes 'global-semantic-stickyfunc-mode)
 #+END_SRC
 
 Finally, we have to let it know where Boost and MPI headers are. This still doesn't seem to work right, though.
 #+BEGIN_SRC emacs-lisp  
-  (semantic-add-system-include "/opt/local/include" 'c++-mode)
-  (semantic-add-system-include "/opt/local/include/mpich-clang35" 'c++-mode)
+;;  (semantic-add-system-include "/opt/local/include" 'c++-mode)
+;;  (semantic-add-system-include "/opt/local/include/mpich-clang35" 'c++-mode)
 #+END_SRC
 
 ** Projectile
@@ -450,11 +462,13 @@ Again, an indispensable package. But the configuration happens mainly in loading
 #+END_SRC
 
 ** Smartparens
-Although it's occasionally annoying (how *do* you move out of a new parentheses pair without pressing an arrow key?) I think it's probably telling that every time I've turned this off I've wound up forgetting delimiters everywhere, so I'm stuck with it.
+I think it's probably telling that every time I've turned this off I've wound up forgetting delimiters everywhere, so I'm stuck with it. I've bound M-up and M-down to move into and out of a delimiter pair, which I am slightly stunned I spent this long without knowing.
 #+BEGIN_SRC emacs-lisp  
   (require 'smartparens-config)
   (show-smartparens-global-mode +1)
   (smartparens-global-mode 1)
+  (define-key smartparens-mode-map (kbd "M-<up>") 'sp-forward-sexp)
+  (define-key smartparens-mode-map (kbd "M-<down>") 'sp-backward-sexp)
 #+END_SRC
 
 And, breaking my rule about mode-specific configuration coming later, here's some special setup for C/C++ mode, adding C-style comments and curly braces to the list of delimiters.
@@ -571,6 +585,33 @@ And finally FINALLY finally, we'll use the =mu4e-alert= package to pop up a noti
   (setq emms-info-libtag-program-name "/soft/src/emacs-ext/emms-4.1/src/emms-print-metadata")
   (setq emms-info-functions '(emms-info-libtag))
 #+END_SRC
+* Terminal mode setup
+Ansi-term in emacs is almost a great terminal emulator, which can be nice to have within emacs. We just need to do a few basic tweaks to improve it, from [[http://echosa.github.io/blog/2012/06/06/improving-ansi-term/][this article]]. First, we want to kill the buffer after we exit a terminal session.
+#+BEGIN_SRC emacs-lisp
+  (defadvice term-sentinel (around my-advice-term-sentinel (proc msg))
+    (if (memq (process-status proc) '(signal exit))
+        (let ((buffer (process-buffer proc)))
+          ad-do-it
+          (kill-buffer buffer))
+      ad-do-it))
+  (ad-activate 'term-sentinel)
+#+END_SRC
+
+We also don't want to it to ask EVERY TIME whether we're using bash. I always use bash, so that just wastes time.
+#+BEGIN_SRC emacs-lisp
+  (defvar my-term-shell "/bin/bash")
+  (defadvice ansi-term (before force-bash)
+    (interactive (list my-term-shell)))
+  (ad-activate 'ansi-term)
+#+END_SRC
+
+We also want to be able to use tab completion - this conflicts with yasnippet mode, so we turn that off in terminal mode.
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'term-mode-hook
+            (lambda ()
+              (yas-minor-mode -1)))
+#+END_SRC
+
 * C++ mode setup
 ** Projectile hook
 #+BEGIN_SRC emacs-lisp
@@ -822,6 +863,7 @@ This might be the biggest section of them all. Let's start by requiring every or
   (require 'ob)
   (require 'ob-ipython)
   (require 'org-journal)
+  (require 'ox-mediawiki)
   ; Temporarily required to fix the ipython console in org-ipython mode
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 #+END_SRC
@@ -928,8 +970,8 @@ Finally, we'll make use of the org-babel Library of Babel feature, which lets us
 Here we just want to tell org-agenda mode where to find all of our files that contain todo list items - my general todo files in =~/org/= and the files generated by org-journal. 
 #+BEGIN_SRC emacs-lisp  
 (setq org-agenda-files (list "~/org/work.org" "~/org/home.org" "~/org/todo.org"))
-(setq org-agenda-file-regexp "\\`[^.].*\\.org\\'\\|[0-9]+")
-(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
+;(setq org-agenda-file-regexp "\\`[^.].*\\.org\\'\\|[0-9]+")
+;'(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
 #+END_SRC
 
 We'd also like to log when we get stuff done for reference.
@@ -937,10 +979,11 @@ We'd also like to log when we get stuff done for reference.
 (setq org-log-done 'time)
 #+END_SRC
 
-We also want to set convenient keybinds for linking to items and calling up the agenda
+We also want to set convenient keybinds for linking to items and calling up the agenda, which we want to include the diary.
 #+BEGIN_SRC emacs-lisp  
-(define-key global-map "\C-cl" 'org-store-link)
-(define-key global-map "\C-ca" 'org-agenda)
+  (define-key global-map "\C-cl" 'org-store-link)
+  (define-key global-map "\C-ca" 'org-agenda)
+  (setq org-agenda-include-diary t)
 #+END_SRC
 
 Finally, I saw a really cool thing [[http://pragmaticemacs.com/emacs/master-your-inbox-with-mu4e-and-org-mode/][here]] where you can generate to-do lists linked to mail messages. That sounds super useful, so let's do it.
@@ -953,6 +996,7 @@ Finally, I saw a really cool thing [[http://pragmaticemacs.com/emacs/master-your
            "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")))
 #+END_SRC
 This enables you to hit =C-c c t= to generate a todo list item while viewing an email that contains a link to that email, which is super cool.
+
 * Miscellaneous modes setup
 ** Makefile mode
 Right now, this is just ensuring that Makefiles have tabs used instead of spaces for indentation, because of Makefile syntax's wonky requirements about tabs.
