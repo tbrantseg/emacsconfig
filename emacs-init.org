@@ -609,7 +609,7 @@ We also want to be able to use tab completion - this conflicts with yasnippet mo
 #+BEGIN_SRC emacs-lisp
   (add-hook 'term-mode-hook
             (lambda ()
-              (yas-minor-mode -1)))
+              (setq yas-minor-mode nil)))
 #+END_SRC
 
 * C++ mode setup
