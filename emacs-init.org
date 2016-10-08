@@ -200,6 +200,8 @@ However, in X11 (if we're running that for some reason) 14-point font is absolut
     (scroll-bar-mode -1))
 #+END_SRC
 
+#+RESULTS:
+
 ** Toolbar
 The toolbar is useful for about the first ten minutes of using emacs, but after that you just want the screen real estate back, especially on my tiny laptop.
 #+BEGIN_SRC emacs-lisp  
@@ -432,7 +434,7 @@ Finally, we have to let it know where Boost and MPI headers are. This still does
 Projectile is utterly fantastic and is an indispensable tool for any project of more than one file. There's not a lot of customization here, since projectile is great right out of the box. Mainly what we're doing here is integrating helm and sr-speedbar with projectile to make sure we gain the advantages of these packages as well.
 #+BEGIN_SRC emacs-lisp  
   (require 'projectile)
-  (projectile-global-mode)
+  (projectile-mode)
   (setq projectile-completion-system 'helm)
   (helm-projectile-on)
   (global-set-key [f8] 'sr-speedbar-toggle)
@@ -609,7 +611,7 @@ We also want to be able to use tab completion - this conflicts with yasnippet mo
 #+BEGIN_SRC emacs-lisp
   (add-hook 'term-mode-hook
             (lambda ()
-              (setq yas-minor-mode nil)))
+              (yas-minor-mode -1)))
 #+END_SRC
 
 * C++ mode setup
@@ -770,7 +772,7 @@ We also want to use =company-anaconda= for python completion - it provides excel
 ** IPython
 IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
  #+BEGIN_SRC emacs-lisp  
-   (setq python-shell-interpreter "ipython")
+   (setq python-shell-interpreter "python")
  #+END_SRC
 
 ** Miscellaneous Python behaviors
@@ -800,12 +802,10 @@ Obviously, we want to use visual-line-mode, because you'd have to be a nut to hi
 
 We also want to use =latexmk= by default, because there is absolutely no reason not to. Running one command instead of four is pretty cool in my book. Note that the hook for adding =latexmk= to the command list really doesn't seem to work well and should be redone.
 #+BEGIN_SRC emacs-lisp  
-  (add-hook 'LaTeX-mode-hook (lambda ()
-    (add-to-ordered-list
-      '("latexmk" "latexmk -pdf %s" TeX-run-TeX nil t
-        :help "Run latexmk on file")
-      TeX-command-list)))
-  (add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk")))
+  (require 'auctex-latexmk)
+  (auctex-latexmk-setup)
+  (setq auctex-latexmk-inherit-TeX-PDF-mode t)
+  ;(add-hook 'TeX-mode-hook '(lambda () (setq TeX-command-default "latexmk")))
 #+END_SRC
 
 ** RefTeX setup
