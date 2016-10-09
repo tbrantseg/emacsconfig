@@ -1,3 +1,4 @@
+Central repository for additional library of babel code blocks.
 * IPython blocks
 ** ipython-plot-setup
 Set up inline plotting for matplotlib.
@@ -19,7 +20,11 @@ Call with =#+CALL: ipython-plot-setup()=.
 ** get-data
 General-purpose block to get data from a file.
 #+NAME: get_data
-#+BEGIN_SRC sh :exports code :results silent :var HOSTNAME="" :var FILENAME=""
+#+BEGIN_SRC sh :exports code :results table :var HOSTNAME="" :var FILENAME=""
   ssh $HOSTNAME "cat $FILENAME"
 #+END_SRC
+
+
+# code_blocks.org ends here
+
 
