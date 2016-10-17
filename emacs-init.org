@@ -200,8 +200,6 @@ However, in X11 (if we're running that for some reason) 14-point font is absolut
     (scroll-bar-mode -1))
 #+END_SRC
 
-#+RESULTS:
-
 ** Toolbar
 The toolbar is useful for about the first ten minutes of using emacs, but after that you just want the screen real estate back, especially on my tiny laptop.
 #+BEGIN_SRC emacs-lisp  
@@ -481,6 +479,11 @@ And, breaking my rule about mode-specific configuration coming later, here's som
                                                        ("* ||\n[i]" "RET"))))
 #+END_SRC
 
+** Firestarter
+Firestarter lets you execute arbitrary commands after saving files; this can be useful for, for instance, using rsync to match a remote directory with a local working directory.
+#+BEGIN_SRC emacs-lisp
+(firestarter-mode)
+#+END_SRC
 * Mail
 I've decided to take a stab at doing this whole Email via emacs thing. We'll use =mbsync= to grab mail, =mu= to index it, and =mu4e= to read it.
 #+BEGIN_SRC emacs-lisp
