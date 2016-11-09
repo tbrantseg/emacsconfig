@@ -166,12 +166,15 @@ This bit of code stores all backup and auto-save files in one location, includin
 ** Package management
 I am not sure if having three package management archives is a good idea. It probably isn't, but untangling that mess that I have probably made is beyond my patience at the moment, so here we are.
 #+BEGIN_SRC emacs-lisp
-  (require 'package)
-  (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-;                            ("marmalade" . "http://marmalade-repo.org/packages/")
-                            ("melpa" . "http://melpa.org/packages/")))
-  (package-initialize)
+    (require 'package)
+    (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
+  ;                            ("marmalade" . "http://marmalade-repo.org/packages/")
+                             ("melpa" . "http://melpa.org/packages/")
+                             ("org" . "http://orgmode.org/elpa/")))
+    (package-initialize)
 #+END_SRC
+
+#+RESULTS:
 
 ** System path
 Most of the executables installed by macports are in =/opt/local/bin=, so we want to make sure subprocesses (like Helm-GTAGS) can find the executable programs they need.
@@ -424,7 +427,7 @@ First we have to go through the usual round of =(require)=s:
 
 We want to use EDE and the semantic DB everywhere possible. The code summaries and sticky function tags are really nice, so we'll enable those too.
 #+BEGIN_SRC emacs-lisp  
-  ;; (semantic-mode 1)
+  (semantic-mode 1)
   ;; (global-ede-mode 1)
   ;; (global-semanticdb-minor-mode 1)
   ;; (global-semantic-idle-scheduler-mode 1)
@@ -793,6 +796,7 @@ First things first, since the RTags server and some of the elisp code is from a 
 #+BEGIN_SRC emacs-lisp
   (require 'rtags)
   (require 'company-rtags)
+  (setq rtags-path (concat user-emacs-directory "bin/"))
 #+END_SRC
 
 We also want to make sure we can actually use rtags for completion in a file. The line about company-backends is redundant, but I don't particularly care at the moment.
@@ -970,7 +974,7 @@ This might be the biggest section of them all. Let's start by requiring every or
   (require 'ob)
   (require 'ob-ipython)
   (require 'org-journal)
-  (require 'ox-mediawiki)
+  ;(require 'ox-mediawiki)
   ; Temporarily required to fix the ipython console in org-ipython mode
   (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 #+END_SRC
@@ -995,7 +999,6 @@ We also want to pre-load our master bibliography with =ebib=.
       (list "~/Library/texmf/bibtex/bib/biblio.bib"))
 (org-add-link-type "ebib" 'ebib)
 #+END_SRC
-
 
 ** Org-LaTeX setup
 The main things we want to do here are set org-latex to use latexmk to compile latex files and be able to use the AASTeX template as a valid document class.
