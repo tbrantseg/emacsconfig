@@ -1042,7 +1042,7 @@ Babel is pretty amazing, particularly when used in org-latex to generate figures
        (ditaa . t)
        (python . t)
        (ipython . t)
-       (sh . t)
+       (shell . t)
        (gnuplot . t)
        (plantuml . t)
        (python . t))))
