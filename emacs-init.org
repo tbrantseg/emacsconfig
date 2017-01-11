@@ -594,8 +594,9 @@ Firestarter lets you execute arbitrary commands after saving files; this can be 
 
 ** Highlight indentation
 #+BEGIN_SRC emacs-lisp
+  (require 'highlight-indent-guides)
+  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
   (setq highlight-indent-guides-method 'character)
-  (highlight-indent-guides-mode)
 #+END_SRC
 * Music
 #+BEGIN_SRC emacs-lisp
