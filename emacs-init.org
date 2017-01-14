@@ -291,6 +291,7 @@ Add line numbers to all of the modes that are likely to need them.
      autoconf-mode-hook
      makefile-mode-hook
      makefile-automake-mode-hook
+     cmake-mode-hook
      ))
 #+END_SRC
 
