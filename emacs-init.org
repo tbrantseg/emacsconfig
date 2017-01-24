@@ -596,7 +596,9 @@ Firestarter lets you execute arbitrary commands after saving files; this can be 
 ** Highlight indentation
 #+BEGIN_SRC emacs-lisp
   (require 'highlight-indent-guides)
-  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)
+  (add-hook 'emacs-startup-hook
+            (lambda ()
+              (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)))
   (setq highlight-indent-guides-method 'character)
 #+END_SRC
 * Music
@@ -731,6 +733,21 @@ We also want to be able to use tab completion - this conflicts with yasnippet mo
   (add-hook 'term-mode-hook
             (lambda ()
               (yas-minor-mode -1)))
+#+END_SRC
+
+Finally, let's use sane-term to enable multiple terminal windows at once
+#+BEGIN_SRC emacs-lisp
+  (require 'sane-term)
+  (global-set-key (kbd "C-x t") 'sane-term)
+  (global-set-key (kbd "C-x T") 'sane-term-create)
+  (add-hook 'term-mode-hook
+            (lambda()
+              (define-key term-raw-map (kbd "C-y")
+                (lambda ()
+                  (interactive)
+                  (term-line-mode)
+                  (yank)
+                  (term-char-mode)))))
 #+END_SRC
 
 * C++ mode setup
@@ -1153,6 +1170,14 @@ IDL is useful, but it has the annoying feature of being proprietary. Luckily the
         '("+/opt/local/share/gnudatalanguage"
           "+/soft/GDL/coyote"
           "+/soft/GDL/pro"))
+#+END_SRC
+
+** ROOT mode
+There's not much in the way of ROOT support on Emacs - it's a shame, but then again ROOT has quite a lot of issues, so it's not too surprising. There is at least one package included with ROOT, so we may as well make sure we load that.
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path "/opt/local/libexec/root6/share/emacs/site-lisp/")
+  (require 'root-help)
 #+END_SRC
 
 * Hydra setup
