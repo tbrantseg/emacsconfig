@@ -428,7 +428,7 @@ First we have to go through the usual round of =(require)=s:
 
 We want to use EDE and the semantic DB everywhere possible. The code summaries and sticky function tags are really nice, so we'll enable those too.
 #+BEGIN_SRC emacs-lisp  
-  (semantic-mode 1)
+  ; (semantic-mode 1)
   ;; (global-ede-mode 1)
   ;; (global-semanticdb-minor-mode 1)
   ;; (global-semantic-idle-scheduler-mode 1)
@@ -856,7 +856,7 @@ Finally, we'll plug RTags into company.
   (add-hook 'c++-mode-hook (lambda()
                              (setq flycheck-clang-language-standard "c++11")))
                              (make-local-variable 'company-backends)
-                             (setq company-backends '(company-rtags company-semantic company-gtags company-keywords))     
+                             (setq company-backends '(company-rtags company-gtags company-keywords))     
 #+END_SRC
 
 There's one last bugbear though. RTags requires a =compile_commands.json= file to use for finding completions - a database of the compilation commands used for each file. This is generated automatically with CMake, but as I use Autotools, you've got to be a bit tricky. Thankfully, [[https://github.com/rizsotto/Bear][Bear]] intercepts compiler calls from a standard makefile to generate this file for Autotools-based projects. The trick is calling it only when you want. The solution I wound up hitting on was defining a local variable called =compdb-command= in the project =.dir-locals.el= which contains an absolute path to a script that runs =cd (project root) && make clean && bear make= to regenerate the compilation DB. Ideally, this keybind should generate the script if it doesn't exist, but one thing at a time.
@@ -874,6 +874,16 @@ There's one last bugbear though. RTags requires a =compile_commands.json= file t
     (compile compdb-command))
 
   (global-set-key (kbd "<f4>") 'regen-compilation-db)
+#+END_SRC
+
+** Semantic refactoring
+#+BEGIN_SRC emacs-lisp
+;  (require 'srefactor)
+;  (require 'srefactor-lisp)
+
+;  (semantic-mode 1)
+
+;  (define-key c++-mode-map (kbd "M-RET") 'srefactor-refactor-at-point)
 #+END_SRC
 
 * PSQL mode setup
@@ -1040,6 +1050,14 @@ The main things we want to do here are set org-latex to use latexmk to compile l
   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
   ("\\paragraph{%s}" . "\\paragraph*{%s}")
   ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+#+END_SRC
+
+We also want to use pdftools to display PDF exports.
+#+BEGIN_SRC emacs-lisp
+  (pdf-tools-install)
+  (setq revert-without-query '("\\.pdf\\'"))
+  (delete '("\\.pdf\\'" . default) org-file-apps)
+  (add-to-list 'org-file-apps '("\\.pdf\\'" . find-file-other-window))
 #+END_SRC
 
 ** Org-ref setup
@@ -1397,7 +1415,7 @@ Let's also use the built-in appointment scheduler
 
 Also, while =debug-on-error= is nice while loading, it's really irritating while trying to actually do stuff, so let's turn it back off now that we're done loading.
 #+BEGIN_SRC emacs-lisp
-  (setq debug-on-error nil)
+  (setq debug-on-error t)
 #+END_SRC
 * End
 So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
