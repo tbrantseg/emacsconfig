@@ -917,7 +917,10 @@ We also want to use =company-anaconda= for python completion - it provides excel
 ** IPython
 IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
  #+BEGIN_SRC emacs-lisp  
-   (setq python-shell-interpreter "python")
+   (setq python-shell-interpreter "ipython")
+   (setq python-shell-interpreter-args "")
+   (setq python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
+   (setq python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: ")
  #+END_SRC
 
 ** Miscellaneous Python behaviors
