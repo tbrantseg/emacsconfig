@@ -7,6 +7,7 @@
 auto-save-list
 tramp
 .\#*
+*.el
 
 # Org-mode
 .org-id-locations
@@ -46,3 +47,4 @@ flycheck_*.el
 
 # tangled elisp file
 emacs-init.el
+*.el

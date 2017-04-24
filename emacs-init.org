@@ -813,6 +813,29 @@ Flycheck mode is great for catching stupid syntax errors that would otherwise wa
 (add-hook 'c-mode-hook 'flycheck-mode)
 #+END_SRC
 
+** Irony for code completion
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'c-mode-hook 'irony-mode)
+  (add-hook 'c++-mode-hook 'irony-mode)
+
+  (defun my-irony-mode-hook ()
+    (define-key irony-mode-map [remap completion-at-point]
+      'irony-completion-at-point-async)
+    (define-key irony-mode-map [remap complete-symbol]
+      'irony-completion-at-point-async))
+
+  (add-hook 'irony-mode-hook 'my-irony-mode-hook)
+  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+  (add-hook 'irony-mode-hook 'company-irony-setup-begin-commands)
+  (setq company-idle-delay 0)
+  (define-key c-mode-map [(tab)] 'company-complete)
+  (define-key c++-mode-map [(tab)] 'company-complete)
+
+  (add-hook 'c++-mode-hook (lambda ()
+                             (setq flycheck-clang-language-standard "c++11")
+                             (setq-local company-backends '(company-irony company-keywords))))
+#+END_SRC
+
 ** RTags setup
 I'm still a little on the fence about RTags - it's a pain in the ass to set up, and it doesn't quite fit into the normal emacs ecosystem. But none of the other options have ever really worked satisfactorily, so it sort of falls into that "worst option except for all the others" category. With that out of the way, here we go.
 
@@ -848,15 +871,6 @@ RTags also provides a better syntax checker than the built-in flycheck engine - 
     (setq-local flycheck-highlighting-mode nil)
     (setq-local flycheck-check-syntax-automatically nil))
   (add-hook 'c-mode-common-hook #'my-flycheck-rtags-setup)
-#+END_SRC
-
-** RTags for autocompletion
-Finally, we'll plug RTags into company.
-#+BEGIN_SRC emacs-lisp  
-  (add-hook 'c++-mode-hook (lambda()
-                             (setq flycheck-clang-language-standard "c++11")))
-                             (make-local-variable 'company-backends)
-                             (setq company-backends '(company-rtags company-gtags company-keywords))     
 #+END_SRC
 
 There's one last bugbear though. RTags requires a =compile_commands.json= file to use for finding completions - a database of the compilation commands used for each file. This is generated automatically with CMake, but as I use Autotools, you've got to be a bit tricky. Thankfully, [[https://github.com/rizsotto/Bear][Bear]] intercepts compiler calls from a standard makefile to generate this file for Autotools-based projects. The trick is calling it only when you want. The solution I wound up hitting on was defining a local variable called =compdb-command= in the project =.dir-locals.el= which contains an absolute path to a script that runs =cd (project root) && make clean && bear make= to regenerate the compilation DB. Ideally, this keybind should generate the script if it doesn't exist, but one thing at a time.
