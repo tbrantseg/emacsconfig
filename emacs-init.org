@@ -134,7 +134,8 @@ I am not sure if having three package management archives is a good idea. It pro
 
 We'll also load some commonly-used function libraries right away to guard against any dependency weirdness.
 #+BEGIN_SRC emacs-lisp
-  (require 'cl)
+  (use-package cl
+    :ensure t)
 #+END_SRC
 
 ** Name and email
@@ -183,8 +184,12 @@ This bit of code stores all backup and auto-save files in one location, includin
 ** System path
 Most of the executables installed by macports are in =/opt/local/bin=, so we want to make sure subprocesses (like Helm-GTAGS) can find the executable programs they need.
 #+BEGIN_SRC emacs-lisp
-  (require 'exec-path-from-shell)
-  (exec-path-from-shell-initialize)
+  ;; (require 'exec-path-from-shell)
+  ;; (exec-path-from-shell-initialize)
+  (use-package exec-path-from-shell
+    :ensure t
+    :config
+    (exec-path-from-shell-initialize))
 #+END_SRC
 
 We'll also want to add extra packages installed by hand into our load path. (I've installed all extra packages, which at the moment is just rtags and mu4e, into =~/.emacs.d/=).
@@ -201,7 +206,11 @@ Finally, we'll want to include the bin directory.
 ** Theme
 I change preferred themes all the time: =lush=, =alect-black-alt=, =distinguished=, and =manoj-dark= are ones I keep coming back to, but I'm always on the lookout for a new one.
 #+BEGIN_SRC emacs-lisp
-  (load-theme 'gruvbox t)
+  ;(load-theme 'gruvbox t)
+  (use-package gruvbox-theme
+    :ensure t
+    :config
+    (load-theme 'gruvbox t))
 #+END_SRC
 
 ** Font
@@ -232,9 +241,15 @@ This is still a work in progress. To deal with a bug in rendering powerline-styl
 
 I'm currently vacillating between =powerline=, =spaceline=, and =smart-mode-line=. =smart-mode-line= is great but seems to have some weird annoying errors, but I think I'm close to getting it working. The powerline theme is nice looking.
 #+BEGIN_SRC emacs-lisp
-  (setq sml/no-confirm-load-theme t)
-  (setq sml/theme 'powerline)
-  (sml/setup)
+  ;; (setq sml/no-confirm-load-theme t)
+  ;; (setq sml/theme 'powerline)
+  ;; (sml/setup)
+  (use-package smart-mode-line-powerline-theme
+    :ensure t
+    :config
+    (setq sml/no-confirm-load-theme t)
+    (setq sml/theme 'powerline)
+    (sml/setup))
 #+END_SRC
 
 ** Terminal appearance
@@ -266,8 +281,13 @@ Customize, as well as things like designating safe themes and local variables, c
 ** Server
 I like having the server running for quick stuff in =emacsclient=, so let's get that going unless it's already running.
 #+BEGIN_SRC emacs-lisp  
-  (require 'server)
-  (unless (server-running-p) (server-start))
+  ;; (require 'server)
+  ;; (unless (server-running-p) (server-start))
+  (use-package server
+    :defer t
+    :config
+    (unless (server-running-p)
+      (server-start)))
 #+END_SRC
 ** Mac-specific
 I also am completely used to using the command key as meta, so let's bow to the inevitable on that.
@@ -301,13 +321,19 @@ Add line numbers to all of the modes that are likely to need them.
 
 Also add a keybind for toggling line numbers as needed.
 #+BEGIN_SRC emacs-lisp  
-(global-set-key (kbd "<M-f10>") 'nlinum-mode)
+  ;(global-set-key (kbd "<M-f10>") 'nlinum-mode)
+  (use-package nlinum
+    :ensure t
+    :bind (("<M-f10" . nlinum-mode)))
 #+END_SRC
+
 ** Other global keybinds and settings
 Add in a keybind for viewing files in read-only mode, which for some reason doesn't have a default key binding.
 #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-M-x C-M-f") 'view-file)
-  (require 'dash)
+  ;; (require 'dash)
+  (use-package dash
+    :ensure t)
 #+END_SRC
 
 Finally we'll set the initial size of the frame. I always maximize the window right away anyway, so I may as well do this automatically.
@@ -333,53 +359,53 @@ The default helm keybinds are...honestly, I don't know. I set it up from [[http:
 
 First up, the helm command prefix. The guide sensibly recommended changing it from =C-x c=, since that is way too close to =C-x C-c= when you're working quickly.
 #+BEGIN_SRC emacs-lisp  
-  (global-set-key (kbd "C-c h") 'helm-command-prefix)
-  (global-unset-key (kbd "C-x c"))
+  ;; (global-set-key (kbd "C-c h") 'helm-command-prefix)
+  ;; (global-unset-key (kbd "C-x c"))
 #+END_SRC
 
 I don't even remember the defaults for these actions, but I'm so used to the remapped keys now I don't want to think about changing them.
 #+BEGIN_SRC emacs-lisp  
-  (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
-  (define-key helm-map (kbd "C-z") 'helm-select-action)
+  ;; (define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
+  ;; (define-key helm-map (kbd "C-i") 'helm-execute-persistent-action)
+  ;; (define-key helm-map (kbd "C-z") 'helm-select-action)
 #+END_SRC
 
 Next, once we've got helm, there is no reason ever to use the standard =M-x= functionality again, so we may as well remap it to call =helm-M-x= directly.
 #+BEGIN_SRC emacs-lisp  
-  (global-set-key (kbd "M-x") 'helm-M-x)
+  ;; (global-set-key (kbd "M-x") 'helm-M-x) 
 #+END_SRC
 
 The same goes for basic actions like opening files, switching buffers, and using the kill-ring, so we'll switch things over to the helm functionality for those items as well.
 #+BEGIN_SRC emacs-lisp  
-  (global-set-key (kbd "C-x b") 'helm-mini)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
+  ;; (global-set-key (kbd "C-x b") 'helm-mini)
+  ;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  ;; (global-set-key (kbd "M-y") 'helm-show-kill-ring)
 #+END_SRC
 
 ** Behaviors
 I don't remember what a lot of this does, but the behaviors it controls are, again, ingrained, so we sure aren't taking it out now.
 #+BEGIN_SRC emacs-lisp  
-  (when (executable-find "curl")
-    (setq helm-google-suggest-use-curl-p t))
+  ;; (when (executable-find "curl")
+  ;;   (setq helm-google-suggest-use-curl-p t))
 
-  (setq helm-split-window-in-side-p        t
-        helm-move-to-line-cycle-in-source      t
-        helm-ff-search-library-in-sexp         t
-        helm-scroll-amount                         8
-        helm-ff-file-name-history-use-recentf  t)
-  (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
+  ;; (setq helm-split-window-in-side-p        t
+  ;;       helm-move-to-line-cycle-in-source      t
+  ;;       helm-ff-search-library-in-sexp         t
+  ;;       helm-scroll-amount                         8
+  ;;       helm-ff-file-name-history-use-recentf  t)
+  ;; (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
 #+END_SRC
 
 I *do* remember what this next block does: use fuzzy matching for finding buffers and commands to complete. Really helpful when you can't remember the exact name of what you're looking for.
 #+BEGIN_SRC emacs-lisp  
-  (setq helm-M-x-fuzzy-match t)
-  (setq helm-buffers-fuzzy-matching    t
-        helm-recentf-fuzzy-match       t)
+  ;; (setq helm-M-x-fuzzy-match t)
+  ;; (setq helm-buffers-fuzzy-matching    t
+  ;;       helm-recentf-fuzzy-match       t)
 #+END_SRC
 
 Finally, we want to keep the helm popup window at a pretty small size, lest it get too distracting.
 #+BEGIN_SRC emacs-lisp  
-  (helm-autoresize-mode t)
+;;  (helm-autoresize-mode t)
 #+END_SRC
 
 ** Helm GTAGS integration
