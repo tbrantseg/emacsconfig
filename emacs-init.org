@@ -817,6 +817,29 @@ Flycheck mode is great for catching stupid syntax errors that would otherwise wa
 (add-hook 'c-mode-hook 'flycheck-mode)
 #+END_SRC
 
+** Irony for code completion
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'c-mode-hook 'irony-mode)
+  (add-hook 'c++-mode-hook 'irony-mode)
+
+  (defun my-irony-mode-hook ()
+    (define-key irony-mode-map [remap completion-at-point]
+      'irony-completion-at-point-async)
+    (define-key irony-mode-map [remap complete-symbol]
+      'irony-completion-at-point-async))
+
+  (add-hook 'irony-mode-hook 'my-irony-mode-hook)
+  (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
+  (add-hook 'irony-mode-hook 'company-irony-setup-begin-commands)
+  (setq company-idle-delay 0)
+  (define-key c-mode-map [(tab)] 'company-complete)
+  (define-key c++-mode-map [(tab)] 'company-complete)
+
+  (add-hook 'c++-mode-hook (lambda ()
+                             (setq flycheck-clang-language-standard "c++11")
+                             (setq-local company-backends '(company-irony company-keywords))))
+#+END_SRC
+
 ** RTags setup
 I'm still a little on the fence about RTags - it's a pain in the ass to set up, and it doesn't quite fit into the normal emacs ecosystem. But none of the other options have ever really worked satisfactorily, so it sort of falls into that "worst option except for all the others" category. With that out of the way, here we go.
 
@@ -852,15 +875,6 @@ RTags also provides a better syntax checker than the built-in flycheck engine - 
     (setq-local flycheck-highlighting-mode nil)
     (setq-local flycheck-check-syntax-automatically nil))
   (add-hook 'c-mode-common-hook #'my-flycheck-rtags-setup)
-#+END_SRC
-
-** RTags for autocompletion
-Finally, we'll plug RTags into company.
-#+BEGIN_SRC emacs-lisp  
-  (add-hook 'c++-mode-hook (lambda()
-                             (setq flycheck-clang-language-standard "c++11")))
-                             (make-local-variable 'company-backends)
-                             (setq company-backends '(company-rtags company-gtags company-keywords))     
 #+END_SRC
 
 There's one last bugbear though. RTags requires a =compile_commands.json= file to use for finding completions - a database of the compilation commands used for each file. This is generated automatically with CMake, but as I use Autotools, you've got to be a bit tricky. Thankfully, [[https://github.com/rizsotto/Bear][Bear]] intercepts compiler calls from a standard makefile to generate this file for Autotools-based projects. The trick is calling it only when you want. The solution I wound up hitting on was defining a local variable called =compdb-command= in the project =.dir-locals.el= which contains an absolute path to a script that runs =cd (project root) && make clean && bear make= to regenerate the compilation DB. Ideally, this keybind should generate the script if it doesn't exist, but one thing at a time.
@@ -922,7 +936,7 @@ We also want to use =company-anaconda= for python completion - it provides excel
 IPython blows the default Python interpreter out of the water. Having a running interpreter is pretty much a must for writing Python code, so let's make sure we are using the best one. I use the MacPorts version of IPython, which is always in the same spot, and academics will stop using Python 2.7 about the same time that the sun dies, so we can count on this not changing much.
  #+BEGIN_SRC emacs-lisp  
    (setq python-shell-interpreter "ipython")
-   (setq python-shell-interpreter-args "")
+   (setq python-shell-interpreter-args "--simple-prompt -i")
    (setq python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
    (setq python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: ")
  #+END_SRC
@@ -1183,6 +1197,40 @@ We'll also borrow a handy function from [[https://blog.aaronbieber.com/2016/09/2
 #+END_SRC
 
 * Miscellaneous modes setup
+** Dired mode
+#+BEGIN_SRC emacs-lisp
+  ;;;###autoload
+  (defun ora-dired-rsync (dest)
+    (interactive
+     (list
+      (expand-file-name
+       (read-file-name
+        "Rsync to:"
+        (dired-dwim-target-directory)))))
+    ;; store all selected files into "files" list
+    (let ((files (dired-get-marked-files
+                  nil current-prefix-arg))
+          ;; the rsync command
+          (tmtxt/rsync-command
+           "rsync -arvz --progress "))
+      ;; add all selected file names as arguments
+      ;; to the rsync command
+      (dolist (file files)
+        (setq tmtxt/rsync-command
+              (concat tmtxt/rsync-command
+                      (shell-quote-argument file)
+                      " ")))
+      ;; append the destination
+      (setq tmtxt/rsync-command
+            (concat tmtxt/rsync-command
+                    (shell-quote-argument dest)))
+      ;; run the async shell command
+      (async-shell-command tmtxt/rsync-command "*rsync*")
+      ;; finally, switch to that window
+      (other-window 1)))
+
+  (define-key dired-mode-map "Y" 'ora-dired-rsync)
+#+END_SRC
 ** Makefile mode
 Right now, this is just ensuring that Makefiles have tabs used instead of spaces for indentation, because of Makefile syntax's wonky requirements about tabs.
 #+BEGIN_SRC emacs-lisp  
