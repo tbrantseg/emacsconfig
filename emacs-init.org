@@ -123,13 +123,14 @@ I am not sure if having three package management archives is a good idea. It pro
 #+BEGIN_SRC emacs-lisp
   (require 'package)
   (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")
-                                          ;                            ("marmalade" . "http://marmalade-repo.org/packages/")
-                           ("melpa" . "http://melpa.org/packages/")
-                           ("org" . "http://orgmode.org/elpa/")))
+					  ;                            ("marmalade" . "http://marmalade-repo.org/packages/")
+			   ("melpa" . "http://melpa.org/packages/")
+			   ("org" . "http://orgmode.org/elpa/")))
   (package-initialize)
   (unless (package-installed-p 'use-package)
     (package-refresh-contents)
     (package-install 'use-package))
+  (require 'bind-key)
 #+END_SRC
 
 We'll also load some commonly-used function libraries right away to guard against any dependency weirdness.
@@ -324,7 +325,7 @@ Also add a keybind for toggling line numbers as needed.
   ;(global-set-key (kbd "<M-f10>") 'nlinum-mode)
   (use-package nlinum
     :ensure t
-    :bind (("<M-f10" . nlinum-mode)))
+    :bind (("<M-f10>" . nlinum-mode)))
 #+END_SRC
 
 ** Other global keybinds and settings
@@ -349,9 +350,36 @@ Helm is fantastic and really should just be a core part of emacs. It provides fu
 ** Basic loading
 First, of course, we've got to load the thing.
 #+BEGIN_SRC emacs-lisp  
-  (require 'helm)
-  (require 'helm-config)
-  (helm-mode 1)
+  ;; (require 'helm)
+  ;; (require 'helm-config)
+  ;; (helm-mode 1)
+  (use-package helm
+    :ensure t
+    :diminish helm-mode
+    :config
+    (progn
+      (require 'helm-config)
+      (when (executable-find "curl")
+        (setq helm-google-suggest-use-curl-p t))
+      (setq helm-split-window-in-side-p t)
+      (setq helm-move-to-line-cycle-in-source t)
+      (setq helm-ff-search-library-in-sexp t)
+      (setq helm-scroll-amount 8)
+      (setq helm-ff-file-name-history-use-recentf t)
+      (setq helm-M-x-fuzzy-match t)
+      (setq helm-buffers-fuzzy-matching t)
+      (setq helm-recentf-fuzzy-match t)
+      (unbind-key "C-x c")
+      (helm-mode 1))
+    :bind
+    (("C-c h" . helm-command-prefix)
+     ("C-x b" . helm-mini)   
+     ("C-x C-f" . helm-find-files)   
+     ("M-y" . helm-show-kill-ring)
+     :map helm-map
+     ("<tab>" . helm-execute-persistent-action)
+     ("C-i" . helm-execute-persistent-action)
+     ("C-z" . helm-select-action)))
 #+END_SRC
 
 ** Keybinds
@@ -413,34 +441,60 @@ GTAGS is fairly useful, but helm makes it absolutely invaluable for navigating a
 
 First, we want to set it up for the modes where large projects tend to come up.
 #+BEGIN_SRC emacs-lisp  
-  (require 'helm-gtags)
-  (my-add-to-multiple-hooks
-   'helm-gtags-mode
-   '(dired-mode-hook
-     eshell-mode-hook
-     c-mode-hook
-     c++-mode-hook
-     asm-mode-hook))
+  ;; (require 'helm-gtags)
+  ;; (my-add-to-multiple-hooks
+  ;;  'helm-gtags-mode
+  ;;  '(dired-mode-hook
+  ;;    eshell-mode-hook
+  ;;    c-mode-hook
+  ;;    c++-mode-hook
+  ;;    asm-mode-hook))
+  (use-package helm-gtags
+    :ensure t
+    :diminish helm-gtags-mode
+    :init
+    (progn
+      (setq helm-gtags-ignore-case t)
+      (setq helm-gtags-auto-update t)
+      (setq helm-gtags-use-input-at-cursor t)
+      (setq helm-gtags-pulse-at-cursor t)
+      (setq helm-gtags-prefix-key "\C-cg")
+      (setq helm-gtags-suggested-key-mapping t)
+      (my-add-to-multiple-hooks
+       'helm-gtags-mode
+       '(dired-mode-hook
+         eshell-mode-hook
+         c-mode-hook
+         c++-mode-hook
+         asm-mode-hook)))
+    :bind
+    (:map helm-gtags-mode-map
+          ("C-c g a" . helm-gtags-tags-in-this-function)
+          ("C-j" . helm-gtags-select)
+          ("M-." . helm-gtags-dwim)
+          ("M-," . helm-gtags-pop-stack)
+          ("C-c <" . helm-gtags-previous-history)
+          ("C-c >" . helm-gtags-next-history)))
 #+END_SRC
 
 Next, just to make it that much easier to guess what you're looking for, some more variable tweaking.
 #+BEGIN_SRC emacs-lisp  
-  (setq helm-gtags-ignore-case t
-        helm-gtags-auto-update t
-        helm-gtags-use-input-at-cursor t
-        helm-gtags-pulse-at-cursor t
-        helm-gtags-prefix-key "\C-cg"
-        helm-gtags-suggested-key-mapping t)
+  ;; (setq helm-gtags-ignore-case t
+  ;;       helm-gtags-auto-update t
+  ;;       helm-gtags-use-input-at-cursor t
+  ;;       helm-gtags-pulse-at-cursor t
+  ;;       helm-gtags-prefix-key "\C-cg"
+  ;;       helm-gtags-suggested-key-mapping t)
 #+END_SRC
 
 Finally, the project navigation keyboard shortcuts. These are insanely useful and I can't think of going back to being without them now.
 #+BEGIN_SRC emacs-lisp  
-  (define-key helm-gtags-mode-map (kbd "C-c g a") 'helm-gtags-tags-in-this-function)
-  (define-key helm-gtags-mode-map (kbd "C-j") 'helm-gtags-select)
-  (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-dwim)
-  (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-pop-stack)
-  (define-key helm-gtags-mode-map (kbd "C-c <") 'helm-gtags-previous-history)
-  (define-key helm-gtags-mode-map (kbd "C-c >") 'helm-gtags-next-history)
+  ;; (define-key helm-gtags-mode-map (kbd "C-c g a") 'helm-gtags-tags-in-this-function)
+  ;; (define-key helm-gtags-mode-map (kbd "C-j") 'helm-gtags-select)
+  ;; (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-dwim)
+  ;; (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-pop-stack)
+  ;; (define-key helm-gtags-mode-map (kbd "C-c <") 'helm-gtags-previous-history)
+  ;; (define-key helm-gtags-mode-map (kbd "C-c >") 'helm-gtags-next-history)
 #+END_SRC
 
 * Project handling setup
@@ -450,10 +504,12 @@ I still don't know if I like CEDET. I like the *idea* of CEDET, but it's never q
 
 First we have to go through the usual round of =(require)=s:
 #+BEGIN_SRC emacs-lisp  
-  (require 'cc-mode)
+  ;(require 'cc-mode)
   ;(require 'semantic)
   ;(require 'semantic/ia)
   ;(require 'semantic/bovine/gcc)
+  (use-package cc-mode
+    :ensure t)
 #+END_SRC
 
 We want to use EDE and the semantic DB everywhere possible. The code summaries and sticky function tags are really nice, so we'll enable those too.
@@ -475,17 +531,30 @@ Finally, we have to let it know where Boost and MPI headers are. This still does
 ** Projectile
 Projectile is utterly fantastic and is an indispensable tool for any project of more than one file. There's not a lot of customization here, since projectile is great right out of the box. Mainly what we're doing here is integrating helm and sr-speedbar with projectile to make sure we gain the advantages of these packages as well.
 #+BEGIN_SRC emacs-lisp  
-  (require 'projectile)
-  (projectile-mode)
-  (setq projectile-completion-system 'helm)
-  (helm-projectile-on)
-  (global-set-key [f8] 'sr-speedbar-toggle)
+  ;; (require 'projectile)
+  ;; (projectile-mode)
+  ;; (setq projectile-completion-system 'helm)
+  ;; (helm-projectile-on)
+  ;; (global-set-key [f8] 'sr-speedbar-toggle)
+  (use-package projectile
+    :ensure t
+    :init
+    (progn
+      (setq projectile-completion-system 'helm)
+      (helm-projectile-on)
+      (projectile-mode))
+    :bind
+    (("<f8>" . sr-speedbar-toggle)))
 #+END_SRC
 
 ** Magit
 Precisely what we said above about Projectile. Magit is almost perfect out of the box, so the only line here is binding a key to =magit-status=. We also want to make sure it can find the MacPorts install of git, so we'll specify the path
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-x g") 'magit-status)
+  ;; (global-set-key (kbd "C-x g") 'magit-status)
+  (use-package magit
+    :ensure t
+    :bind
+    (("C-x g" . magit-status)))
 #+END_SRC
 
 * Useful global modes setup
@@ -494,39 +563,64 @@ There are a few other miscellaneous modes I want to set up before we get into th
 ** Company
 Company is, as far as I can tell, the best autocompletion system out there. But most of the customization happens at the mode level, not globally (and for a lot of modes the default list of backends is fine), so this section is only to turn it on.
 #+BEGIN_SRC emacs-lisp  
-  (require 'company)
-  (add-hook 'after-init-hook 'global-company-mode)
+  ;; (require 'company)
+  ;; (add-hook 'after-init-hook 'global-company-mode)
+  (use-package company
+    :ensure t
+    :init
+    (add-hook 'after-init-hook 'global-company-mode))
 #+END_SRC
 
 ** YASnippet
 Again, an indispensable package. But the configuration happens mainly in loading custom snippets, since the default behaviors are just fine. I'll probably include some custom snippet loading stuff here eventually.
 #+BEGIN_SRC emacs-lisp  
-(require 'yasnippet)
-(yas-global-mode 1)
+  ;; (require 'yasnippet)
+  ;; (yas-global-mode 1)
+  (use-package yasnippet
+    :ensure t
+    :init
+    (yas-global-mode 1))
 #+END_SRC
 
 ** Smartparens
 I think it's probably telling that every time I've turned this off I've wound up forgetting delimiters everywhere, so I'm stuck with it. I've bound M-up and M-down to move into and out of a delimiter pair, which I am slightly stunned I spent this long without knowing.
 #+BEGIN_SRC emacs-lisp  
-  (require 'smartparens-config)
-  (show-smartparens-global-mode +1)
-  (smartparens-global-mode 1)
-  (define-key smartparens-mode-map (kbd "M-<up>") 'sp-forward-sexp)
-  (define-key smartparens-mode-map (kbd "M-<down>") 'sp-backward-sexp)
+  ;; (require 'smartparens-config)
+  ;; (show-smartparens-global-mode +1)
+  ;; (smartparens-global-mode 1)
+  ;; (define-key smartparens-mode-map (kbd "M-<up>") 'sp-forward-sexp)
+  ;; (define-key smartparens-mode-map (kbd "M-<down>") 'sp-backward-sexp)
+  (use-package smartparens
+    :ensure t
+    :init
+    (progn
+      (require 'smartparens-config)
+      (show-smartparens-global-mode +1)
+      (smartparens-global-mode 1)
+      (sp-with-modes '(c-mode c++-mode)
+        (sp-local-pair "{" nil :post-handlers '(("||\n[i]" "RET")))
+        (sp-local-pair "/*" "/*" :post-handlers '((" | " "SPC")
+                                                  ("* ||\n[i]" "RET")))))
+    :bind
+    (:map smartparens-mode-map
+          ("M-<up>" . sp-forward-sexp)
+          ("M-<down>" . sp-backward-sexp)))
 #+END_SRC
 
 And, breaking my rule about mode-specific configuration coming later, here's some special setup for C/C++ mode, adding C-style comments and curly braces to the list of delimiters.
 #+BEGIN_SRC emacs-lisp  
-  (sp-with-modes '(c-mode c++-mode)
-             (sp-local-pair "{" nil :post-handlers '(("||\n[i]" "RET")))
-             (sp-local-pair "/*" "/*" :post-handlers '((" | " "SPC")
-                                                       ("* ||\n[i]" "RET"))))
+  ;; (sp-with-modes '(c-mode c++-mode)
+  ;;            (sp-local-pair "{" nil :post-handlers '(("||\n[i]" "RET")))
+  ;;            (sp-local-pair "/*" "/*" :post-handlers '((" | " "SPC")
+  ;;                                                      ("* ||\n[i]" "RET"))))
 #+END_SRC
 
 ** Firestarter
 Firestarter lets you execute arbitrary commands after saving files; this can be useful for, for instance, using rsync to match a remote directory with a local working directory.
 #+BEGIN_SRC emacs-lisp
-(firestarter-mode)
+  ;; (firestarter-mode)
+  (use-package firestarter
+    :ensure t)
 #+END_SRC
 # * Mail
 # I've decided to take a stab at doing this whole Email via emacs thing. We'll use =mbsync= to grab mail, =mu= to index it, and =mu4e= to read it.
@@ -625,43 +719,67 @@ Firestarter lets you execute arbitrary commands after saving files; this can be 
 
 ** Highlight indentation
 #+BEGIN_SRC emacs-lisp
-  (require 'highlight-indent-guides)
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)))
-  (setq highlight-indent-guides-method 'character)
+  ;; (require 'highlight-indent-guides)
+  ;; (add-hook 'emacs-startup-hook
+  ;;           (lambda ()
+  ;;             (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)))
+  ;; (setq highlight-indent-guides-method 'character)
+  (use-package highlight-indent-guides  
+    :ensure t
+    :init
+    (progn
+      (add-hook 'emacs-startup-hook
+                (lambda ()
+                  (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)))
+      (setq highlight-indent-guides-method 'character)))
 #+END_SRC
+
 * Music
 #+BEGIN_SRC emacs-lisp
-  (require 'emms-setup)
-  (emms-all)
-  (emms-default-players)
-  (setq emms-source-file-default-directory "~/Music/")
+  ;; (require 'emms-setup)
+  ;; (emms-all)
+  ;; (emms-default-players)
+  ;; (setq emms-source-file-default-directory "~/Music/")
 
-  (require 'emms-info-libtag)
-  (setq emms-info-libtag-program-name "/soft/src/emacs-ext/emms-4.1/src/emms-print-metadata")
-  (setq emms-info-functions '(emms-info-libtag))
+  ;; (require 'emms-info-libtag)
+  ;; (setq emms-info-libtag-program-name "/soft/src/emacs-ext/emms-4.1/src/emms-print-metadata")
+  ;; (setq emms-info-functions '(emms-info-libtag))
+  (use-package emms
+    :ensure t
+    :init
+    (setq emms-source-file-default-directory "~/Music/")
+    (setq emms-info-libtag-program-name "/soft/src/emacs-ext/emms-4.1/src/emms-print-metadata")
+    (setq emms-info-functions '(emms-info-libtag))
+    :config
+    (require 'emms-setup)
+    (emms-all)
+    (emms-default-players)
+    (require 'emms-info-libtag))
 #+END_SRC
 * Mail
 I've decided to take a stab at doing this whole Email via emacs thing. We'll use =mbsync= to grab mail, =mu= to index it, and =mu4e= to read it.
 #+BEGIN_SRC emacs-lisp
-  (require 'mu4e)
-  (setq mu4e-maildir "/Users/tbrantse/Maildir")
-  (setq mu4e-get-mail-command "/opt/local/bin/mbsync -a")
-#+END_SRC
+  ;; (require 'mu4e)
+  ;; (setq mu4e-maildir "/Users/tbrantse/Maildir")
+  ;; (setq mu4e-get-mail-command "/opt/local/bin/mbsync -a")
+  (defun my-render-html-message ()
 
-#+RESULTS:
-: /opt/local/bin/mbsync -a
+
+  (use-package mu4e
+    :init
+    (progn
+      )
+#+END_SRC
 
 To use =eww= to render HTML mail, we can use [[http://emacs.stackexchange.com/questions/3051/how-can-i-use-eww-as-a-renderer-for-mu4e][this Stack exchange thread]]:
 #+BEGIN_SRC emacs-lisp
-(defun my-render-html-message ()
-  (let ((dom (libxml-parse-html-region (point-min) (point-max))))
-    (erase-buffer)
-    (shr-insert-document dom)
-    (goto-char (point-min))))
+  (defun my-render-html-message ()
+    (let ((dom (libxml-parse-html-region (point-min) (point-max))))
+      (erase-buffer)
+      (shr-insert-document dom)
+      (goto-char (point-min))))
 
-(setq mu4e-html2text-command 'my-render-html-message)
+  (setq mu4e-html2text-command 'my-render-html-message)
 #+END_SRC
 
 Finally, we'll want to set things up to play nice with multiple accounts, from [[http://emacs.stackexchange.com/questions/10884/mu4e-multiple-accounts][another Stack exchange thread]]:
