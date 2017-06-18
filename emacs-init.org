@@ -308,7 +308,15 @@ Add in a keybind for viewing files in read-only mode, which for some reason does
 
 Finally we'll set the initial size of the frame. I always maximize the window right away anyway, so I may as well do this automatically.
 #+BEGIN_SRC emacs-lisp
-  (toggle-frame-maximized)
+  (defun mac-toggle-max-window ()
+    (interactive)
+    (if (boundp ns-use-native-fullscreen)
+        (setq ns-use-native-fullscreen nil))
+    (set-frame-parameter nil 'fullscreen 
+      (if (frame-parameter nil 'fullscreen)
+        nil
+        'fullboth)))
+  ;; (mac-toggle-max-window)
 #+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
@@ -826,14 +834,20 @@ Flycheck mode is great for catching stupid syntax errors that would otherwise wa
 
   (add-hook 'irony-mode-hook 'my-irony-mode-hook)
   (add-hook 'irony-mode-hook 'irony-cdb-autosetup-compile-options)
-  (add-hook 'irony-mode-hook 'company-irony-setup-begin-commands)
+  (add-to-list 'company-backends 'company-irony)
+
+  (defun irony-restart-server ()
+    (irony-server-kill)
+    (irony--start-server-process))
+
+  (setq company-show-numbers t)
+  (setq company-tooltip-limit 20)
   (setq company-idle-delay 0)
   (define-key c-mode-map [(tab)] 'company-complete)
   (define-key c++-mode-map [(tab)] 'company-complete)
 
   (add-hook 'c++-mode-hook (lambda ()
-                             (setq flycheck-clang-language-standard "c++11")
-                             (setq-local company-backends '(company-irony company-keywords))))
+                             (setq flycheck-clang-language-standard "c++11")))
 #+END_SRC
 
 ** RTags setup
@@ -849,9 +863,9 @@ First things first, since the RTags server and some of the elisp code is from a 
 We also want to make sure we can actually use rtags for completion in a file. The line about company-backends is redundant, but I don't particularly care at the moment.
 #+BEGIN_SRC emacs-lisp  
   (setq rtags-completions-enabled t)
-  (eval-after-load 'company
-    '(add-to-list
-      'company-backends 'company-rtags))
+  ;; (eval-after-load 'company
+  ;;   '(add-to-list
+  ;;     'company-backends 'company-rtags))
   (setq rtags-autostart-diagnostics t)
   (rtags-enable-standard-keybindings)
   (setq rtags-use-helm t)
@@ -917,15 +931,17 @@ For how much I use Python, you'd think there would be more tweaks in here, but t
 ** Anaconda
 I don't know precisely what Anaconda does, but it seems to provide some pretty great functionality, so let's make sure we have it on all the time. Flycheck also works with it to do Python syntax checking, which is a lifesaver.
 #+BEGIN_SRC emacs-lisp  
-  (add-hook 'python-mode-hook 'anaconda-mode)
-  (add-hook 'python-mode-hook 'flycheck-mode)
+    (add-hook 'python-mode-hook 'anaconda-mode)
+    (add-hook 'python-mode-hook 'flycheck-mode)
+  ;(elpy-enable)
+  ;(define-key python-mode-map (kbd "<tab>") 'elpy-company-backend)
 #+END_SRC
 
 We also want to use =company-anaconda= for python completion - it provides excellent context-sensitive completion and documentation for candidates.
 #+BEGIN_SRC emacs-lisp  
-(add-hook 'python-mode-hook (lambda ()
-                              (make-local-variable 'company-backends)
-                              (add-to-list 'company-backends 'company-anaconda)))
+   (add-hook 'python-mode-hook (lambda ()
+                                 (make-local-variable 'company-backends)
+                                 (add-to-list 'company-backends 'company-anaconda)))
 #+END_SRC
 
 ** IPython
@@ -1072,6 +1088,7 @@ The main things we want to do here are set org-latex to use latexmk to compile l
 We also want to use pdftools to display PDF exports.
 #+BEGIN_SRC emacs-lisp
   (pdf-tools-install)
+  (setq doc-view-ghostscript-program "/opt/local/bin/gs")
   (setq revert-without-query '("\\.pdf\\'"))
   (delete '("\\.pdf\\'" . default) org-file-apps)
   (add-to-list 'org-file-apps '("\\.pdf\\'" . find-file-other-window))
@@ -1142,9 +1159,10 @@ Here we just want to tell org-agenda mode where to find all of our files that co
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp  
-(setq org-agenda-files (list "~/org/work.org" "~/org/home.org" "~/org/todo.org"))
-;(setq org-agenda-file-regexp "\\`[^.].*\\.org\\'\\|[0-9]+")
-;'(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
+  (setq org-agenda-files (list "~/org/work.org" "~/org/home.org" "~/org/todo.org"))
+  (add-to-list 'org-agenda-files (expand-file-name "~/Research/Wiki"))
+  ;(setq org-agenda-file-regexp "\\`[^.].*\\.org\\'\\|[0-9]+")
+  ;'(add-to-list 'org-agenda-files (expand-file-name "~/Documents/journal"))
 #+END_SRC
 
 We'd also like to log when we get stuff done for reference.

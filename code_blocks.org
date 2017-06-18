@@ -14,6 +14,7 @@ Call with =#+CALL: ipython-plot-setup()=.
   matplotlib.rcParams['text.usetex']=True
   matplotlib.rcParams['font.family']='serif'
   matplotlib.rcParams['figure.autolayout']=True
+  matplotlib.rcParams['figure.facecolor']='w'
 #+END_SRC
 
 * Bash blocks
