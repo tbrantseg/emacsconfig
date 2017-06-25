@@ -931,17 +931,18 @@ For how much I use Python, you'd think there would be more tweaks in here, but t
 ** Anaconda
 I don't know precisely what Anaconda does, but it seems to provide some pretty great functionality, so let's make sure we have it on all the time. Flycheck also works with it to do Python syntax checking, which is a lifesaver.
 #+BEGIN_SRC emacs-lisp  
-    (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'flycheck-mode)
-  ;(elpy-enable)
-  ;(define-key python-mode-map (kbd "<tab>") 'elpy-company-backend)
+  ;  (add-hook 'python-mode-hook 'anaconda-mode)
+  ;  (add-hook 'python-mode-hook 'flycheck-mode)
+  (elpy-enable)
+  (elpy-use-ipython)
+  (define-key python-mode-map (kbd "<tab>") 'elpy-company-backend)
 #+END_SRC
 
 We also want to use =company-anaconda= for python completion - it provides excellent context-sensitive completion and documentation for candidates.
 #+BEGIN_SRC emacs-lisp  
-   (add-hook 'python-mode-hook (lambda ()
+   (add-hook 'elpy-mode-hook (lambda ()
                                  (make-local-variable 'company-backends)
-                                 (add-to-list 'company-backends 'company-anaconda)))
+                                 (add-to-list 'company-backends 'elpy-company-backend)))
 #+END_SRC
 
 ** IPython
@@ -1185,7 +1186,12 @@ Finally, I saw a really cool thing [[http://pragmaticemacs.com/emacs/master-your
   (setq org-capture-templates
         '(("t" "todo" entry (file+headline "~/org/todo.org" "Tasks")
            "* TODO [#A] %?\nSCHEDULED: %(org-insert-time-stamp (org-read-date nil t \"+0d\"))\n%a\n")))
+
+  (setq
+    mu4e-index-cleanup nil      ;; don't do a full cleanup check
+    mu4e-index-lazy-check t)    ;; don't consider up-to-date dirs
 #+END_SRC
+
 This enables you to hit =C-c c t= to generate a todo list item while viewing an email that contains a link to that email, which is super cool.
 
 Following the handy org-mode functions [[https://blog.aaronbieber.com/2016/09/24/an-agenda-for-life-with-org-mode.html][here]], we'll make a command to display a fancy agenda thing.
