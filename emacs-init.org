@@ -197,7 +197,7 @@ Finally, we'll want to include the bin directory.
 ** Theme
 I change preferred themes all the time: =lush=, =alect-black-alt=, =distinguished=, and =manoj-dark= are ones I keep coming back to, but I'm always on the lookout for a new one.
 #+BEGIN_SRC emacs-lisp
-  (load-theme 'gruvbox t)
+  (load-theme 'zenburn t)
 #+END_SRC
 
 ** Font
@@ -308,15 +308,7 @@ Add in a keybind for viewing files in read-only mode, which for some reason does
 
 Finally we'll set the initial size of the frame. I always maximize the window right away anyway, so I may as well do this automatically.
 #+BEGIN_SRC emacs-lisp
-  (defun mac-toggle-max-window ()
-    (interactive)
-    (if (boundp ns-use-native-fullscreen)
-        (setq ns-use-native-fullscreen nil))
-    (set-frame-parameter nil 'fullscreen 
-      (if (frame-parameter nil 'fullscreen)
-        nil
-        'fullboth)))
-  ;; (mac-toggle-max-window)
+  (toggle-frame-fullscreen)
 #+END_SRC
 
 With that, we're through the general setup. Up next, Helm.
