@@ -634,6 +634,12 @@ To use =eww= to render HTML mail, we can use [[http://emacs.stackexchange.com/qu
 (setq mu4e-html2text-command 'my-render-html-message)
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'mu4e-view-actions
+               '("ViewInBrowser" . mu4e-action-view-in-browser)
+               '("ViewAsPdf" . mu4e-action-view-as-pdf))
+#+END_SRC
+
 Finally, we'll want to set things up to play nice with multiple accounts, from [[http://emacs.stackexchange.com/questions/10884/mu4e-multiple-accounts][another Stack exchange thread]]:
 #+BEGIN_SRC emacs-lisp
   (defun my-mu4e-set-account ()
