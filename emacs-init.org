@@ -92,6 +92,370 @@ But what about after? This file contains a bit of file-local code at the end, na
 
 This lambda function, saved at the very end of the file as an "eval" will cause this file to regenerate and byte-compile the file =emacs-init.el= every time you save this file, ensuring that any changes are automatically ready to go next time you start Emacs. Handy!
 
+*** Use-Package 
+Okay, the other thing is to have use-package so we can keep things as orderly as possible. This code block will automatically install =use-package= if not installed, so that it's available for the rest of this config.
+#+BEGIN_SRC emacs-lisp
+  (require 'package)
+  (setq package-enable-at-startup nil)
+  (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+  (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
+  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
+  (package-initialize)
+
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+
+  (eval-when-compile
+    (require 'use-package))
+  (use-package bind-key
+    :ensure t)
+#+END_SRC
+
+* Startup
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-screen t)
+  (setq initial-scratch-message
+	(concat
+	 (concat ";; GNU Emacs " emacs-version  "\n")
+	 (concat ";; Build system: " system-configuration "\n")
+	 (concat ";; Build date/time: "
+		 (format-time-string "%Y-%m-%d %T" emacs-build-time) "\n\n")
+	  ";; C-j: Evaluate Lisp expression within this buffer\n\n"
+	  ";; C-x b: Select buffer menu\n"
+	  ";; C-x f: Create file\n"
+	  ";; C-c u: Desk utilities menu\n"
+	  ";; C-c p p: Jump to project\n"
+	  ";; C-c c: Emacs config menu\n\n"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package cl)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq user-full-name "Thomas Brantseg")
+  (setq user-email-address "tom.brantseg@iastate.edu")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (let ((backup-dir "~/.emacs.d/backups")
+	(auto-saves-dir "~/.emacs.d/auto-saves"))
+    (dolist (dir (list backup-dir auto-saves-dir))
+      (when (not (file-directory-p dir))
+	(make-directory dir t)))
+    (setq backup-directory-alist `(("." . ,backup-dir))
+	  auto-save-file-name-transforms `((".*" ,auto-saves-dir t))
+	  auto-save-list-file-prefix (concat auto-saves-dir ".saves-")
+	  tramp-backup-directory-alist `((".*" . ,backup-dir))
+	  tramp-auto-save-directory auto-saves-dir))
+
+  (setq backup-by-copying t)
+  (setq delete-old-versions t)
+  (setq version-control t)
+  (setq kept-new-versions 5)
+  (setq kept-old-versions 2)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package server
+    :config
+    (unless (server-running-p)
+      (server-start)))
+#+END_SRC
+
+* System Paths
+#+BEGIN_SRC emacs-lisp
+  (use-package exec-path-from-shell
+    :if (memq window-system '(mac ns))
+    :ensure t
+    :config
+    (exec-path-from-shell-initialize))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file (expand-file-name "customize.el" user-emacs-directory))
+  (when (file-exists-p custom-file)
+    (load custom-file))
+#+END_SRC
+
+* Look and Feel
+** Font and theme
+#+BEGIN_SRC emacs-lisp
+  (set-face-attribute 'default nil
+	      :family "Inconsolata for Powerline" :height 140 :weight 'normal)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package lush-theme
+    :ensure t
+    :config
+    (load-theme 'lush t))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package smart-mode-line-powerline-theme
+    :ensure t)
+  (use-package smart-mode-line
+    :ensure t
+    :init
+    (setq sml/no-confirm-load-theme t)
+    (setq sml/theme 'powerline)
+    :config
+    (sml/setup))
+#+END_SRC
+
+** Menus and line numbers
+#+BEGIN_SRC emacs-lisp
+  (unless window-system
+    (menu-bar-mode -1))
+  (tool-bar-mode -1)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package nlinum
+    :ensure t
+
+    :init
+    (defun my-add-to-multiple-hooks (function hooks)
+    (mapc (lambda (hook)
+	    (add-hook hook function))
+	  hooks))
+
+    :config
+    (my-add-to-multiple-hooks
+     'nlinum-mode
+     '(c++-mode-hook
+       sql-mode-hook
+       python-mode-hook
+       LaTeX-mode-hook
+       sh-mode-hook
+       emacs-lisp-mode-hook
+       autoconf-mode-hook
+       makefile-mode-hook
+       makefile-automake-mode-hook
+       cmake-mode-hook))
+
+    :bind
+    ("<M-f10>" . nlinum-mode))
+#+END_SRC
+* OS-specific
+#+BEGIN_SRC emacs-lisp
+  (if (memq window-system '(mac ns))
+      (progn
+	(setq ns-use-srgb-colorspace nil)
+	(setq mac-command-modifier 'meta)))
+#+END_SRC
+
+* Helm
+** Helm Core
+#+BEGIN_SRC emacs-lisp
+  (use-package helm
+    :ensure t
+  
+    :init
+    (global-unset-key (kbd "C-x c"))
+    (when (executable-find "curl")
+      (setq helm-net-prefer-curl t))
+    (setq helm-split-window-in-side-p t)
+    (setq helm-move-to-line-cycle-in-source t)
+    (setq helm-ff-search-library-in-sexp t)
+    (setq helm-scroll-amount 8)
+    (setq helm-ff-file-name-history-use-recentf t)
+    (setq helm-M-x-fuzzy-match t)
+    (setq helm-buffers-fuzzy-matching t)
+    (setq helm-recentf-fuzzy-match t)
+
+    :config
+    (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
+    (helm-autoresize-mode t)
+  
+    :bind
+    (("C-c h" . helm-command-prefix)
+     ("M-x" . helm-M-x)
+     ("C-x b" . helm-mini)
+     ("C-x C-f" . helm-find-files)
+     ("M-y" . helm-show-kill-ring)
+     :map helm-map
+     ("<tab>" . helm-execute-persistent-action)
+     ("C-i" . helm-execute-persistent-action)
+     ("C-z" . helm-select-action)))
+#+END_SRC
+
+** Helm-GTAGS
+#+BEGIN_SRC emacs-lisp
+  (use-package helm-gtags
+    :ensure t
+
+    :init
+    (setq helm-gtags-ignore-case t)
+    (setq helm-gtags-auto-update t)
+    (setq helm-gtags-use-input-at-cursor t)
+    (setq helm-gtags-pulse-at-cursor t)
+    (setq helm-gtags-prefix-key "\C-cg")
+    (setq helm-gtags-suggested-key-mapping t)
+
+    :config
+    (my-add-to-multiple-hooks
+     'helm-gtags-mode
+     '(dired-mode-hook
+       eshell-mode-hook
+       c-mode-hook
+       c++-mode-hook
+       asm-mode-hook))
+
+    :bind
+    (:map helm-gtags-mode-map
+	  ("C-c g a" . helm-gtags-tags-in-this-function)
+	  ("C-j" . helm-gtags-select)
+	  ("M-." . helm-gtags-dwim)
+	  ("M-," . helm-gtags-pop-stack)
+	  ("C-c <" . helm-gtags-previous-history)
+	  ("C-c >" . helm-gtags-next-history)))
+#+END_SRC
+
+* Projectile
+#+BEGIN_SRC emacs-lisp
+  (use-package projectile
+    :ensure t
+    :init
+    (setq projectile-completion-system 'helm)
+    (add-hook 'c++-mode-hook 'projectile-mode)
+
+    :config
+    (projectile-mode)
+
+    :bind
+    (:map c-mode-base-map
+	  ("<f6>" . projectile-find-other-file)
+	  ("<f7>" . projectile-find-other-file-other-window)))
+#+END_SRC
+* Magit
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind
+    (("C-x g" . magit-status)))
+#+END_SRC
+* Company
+#+BEGIN_SRC emacs-lisp
+  (use-package company
+    :ensure t
+    :init
+    (add-hook 'after-init-hook 'company-mode)
+    (setq company-show-numbers t)
+    (setq company-tooltip-limit 20)
+    (setq company-idle-delay 0)
+    :config
+    (global-company-mode))
+#+END_SRC
+** Subsidiary packages
+#+BEGIN_SRC emacs-lisp
+  (use-package company-clang
+    :ensure t)
+  (use-package company-irony
+    :ensure t)
+  (use-package company-irony-c-headers
+    :ensure t)
+  (use-package company-rtags
+    :ensure t)
+#+END_SRC
+* Flycheck
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :init
+    (add-hook 'c++-mode-hook 'flycheck-mode)
+    (add-hook 'c-mode-hook 'flycheck-mode))
+#+END_SRC
+* CMake IDE
+#+BEGIN_SRC emacs-lisp
+  (use-package rtags
+    :ensure t)
+  (use-package cpputils-cmake
+    :ensure t
+    :init
+    (add-hook 'c-mode-common-hook
+            (lambda ()
+              (if (derived-mode-p 'c-mode 'c++-mode)
+                  (cppcm-reload-all)
+                ))))
+  (use-package cmake-ide
+    :ensure t
+    :config
+    (cmake-ide-setup))
+#+END_SRC
+* Minor modes
+** YASnippet
+#+BEGIN_SRC emacs-lisp
+  (use-package yasnippet
+    :ensure t
+    :config
+    (yas-global-mode 1))
+#+END_SRC
+
+** Smartparens
+#+BEGIN_SRC emacs-lisp
+  (use-package smartparens
+    :ensure t
+    :config
+    (sp-with-modes '(c-mode c++-mode)
+	     (sp-local-pair "{" nil :post-handlers '(("||\n[i]" "RET")))
+	     (sp-local-pair "/*" "/*" :post-handlers '((" | " "SPC")
+						       ("* ||\n[i]" "RET"))))
+    (show-smartparens-global-mode +1)
+    (smartparens-global-mode 1)
+
+    :bind
+    (:map smartparens-mode-map
+	  ("M-<up>" . sp-forward-sexp)
+	  ("M-<down>" . sp-backward-sexp)))
+#+END_SRC
+
+** Firestarter
+#+BEGIN_SRC emacs-lisp
+  (use-package firestarter
+    :ensure t
+    :config
+    (firestarter-mode))
+#+END_SRC
+
+** Highlight indentation
+#+BEGIN_SRC emacs-lisp
+  (use-package highlight-indent-guides
+    :ensure t
+    :init
+    (add-hook 'emacs-startup-hook
+	    (lambda ()
+	      (add-hook 'prog-mode-hook 'highlight-indent-guides-mode)))
+    (setq highlight-indent-guides-method 'character))
+#+END_SRC
+* Other C++ settings
+#+BEGIN_SRC emacs-lisp
+  (setq c-default-style "stroustrup")
+  (global-set-key (kbd "RET") 'newline-and-indent)
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 4)
+  (setq auto-mode-alist(cons '("\\.h$"   . c++-mode)  auto-mode-alist))
+  (define-key c-mode-base-map (kbd "M-RET") 'comment-indent-new-line)
+  (define-key c-mode-base-map [(tab)] 'company-complete)
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (defcustom main-compile-command nil
+    "Shell command used for main project compilation."
+    :type 'string
+    :group 'tom-custom)
+  (put 'main-compile-command 'safe-local-variable #'stringp)
+
+  (defun main-compile-project ()
+    (interactive)
+    (setq-local compilation-read-command nil)
+    (compile main-compile-command))
+
+  (global-set-key (kbd "<f5>") 'main-compile-project)
+ 
+  (setq compilation-scroll-output 1)
+#+END_SRC
 * End
 So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
 #+BEGIN_SRC emacs-lisp
