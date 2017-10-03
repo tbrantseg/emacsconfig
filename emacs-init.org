@@ -197,7 +197,7 @@ Finally, we'll want to include the bin directory.
 ** Theme
 I change preferred themes all the time: =lush=, =alect-black-alt=, =distinguished=, and =manoj-dark= are ones I keep coming back to, but I'm always on the lookout for a new one.
 #+BEGIN_SRC emacs-lisp
-  (load-theme 'zenburn t)
+  (load-theme 'monokai t)
 #+END_SRC
 
 ** Font
@@ -615,9 +615,9 @@ Firestarter lets you execute arbitrary commands after saving files; this can be 
 * Mail
 I've decided to take a stab at doing this whole Email via emacs thing. We'll use =mbsync= to grab mail, =mu= to index it, and =mu4e= to read it.
 #+BEGIN_SRC emacs-lisp
-  (require 'mu4e)
-  (setq mu4e-maildir "/Users/tbrantse/Maildir")
-  (setq mu4e-get-mail-command "/opt/local/bin/mbsync -a")
+  ;; (require 'mu4e)
+  ;; (setq mu4e-maildir "/Users/tbrantse/Maildir")
+  ;; (setq mu4e-get-mail-command "/opt/local/bin/mbsync -a")
 #+END_SRC
 
 #+RESULTS:
@@ -625,94 +625,94 @@ I've decided to take a stab at doing this whole Email via emacs thing. We'll use
 
 To use =eww= to render HTML mail, we can use [[http://emacs.stackexchange.com/questions/3051/how-can-i-use-eww-as-a-renderer-for-mu4e][this Stack exchange thread]]:
 #+BEGIN_SRC emacs-lisp
-(defun my-render-html-message ()
-  (let ((dom (libxml-parse-html-region (point-min) (point-max))))
-    (erase-buffer)
-    (shr-insert-document dom)
-    (goto-char (point-min))))
+  ;; (defun my-render-html-message ()
+  ;;   (let ((dom (libxml-parse-html-region (point-min) (point-max))))
+  ;;     (erase-buffer)
+  ;;     (shr-insert-document dom)
+  ;;     (goto-char (point-min))))
 
-(setq mu4e-html2text-command 'my-render-html-message)
+  ;; (setq mu4e-html2text-command 'my-render-html-message)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (add-to-list 'mu4e-view-actions
-               '("ViewInBrowser" . mu4e-action-view-in-browser)
-               '("ViewAsPdf" . mu4e-action-view-as-pdf))
+  ;; (add-to-list 'mu4e-view-actions
+  ;;              '("ViewInBrowser" . mu4e-action-view-in-browser)
+  ;;              '("ViewAsPdf" . mu4e-action-view-as-pdf))
 #+END_SRC
 
 Finally, we'll want to set things up to play nice with multiple accounts, from [[http://emacs.stackexchange.com/questions/10884/mu4e-multiple-accounts][another Stack exchange thread]]:
 #+BEGIN_SRC emacs-lisp
-  (defun my-mu4e-set-account ()
-    "Set the account for composing a message."
-    (let* ((account
-            (if mu4e-compose-parent-message
-                (let ((maildir (mu4e-message-field mu4e-compose-parent-message :maildir)))
-                  (string-match "/\\(.*?\\)/" maildir)
-                  (match-string 1 maildir))
-              (completing-read (format "Compose with account: (%s) "
-                                       (mapconcat #'(lambda (var) (car var))
-                                                  my-mu4e-account-alist "/"))
-                               (mapcar #'(lambda (var) (car var)) my-mu4e-account-alist)
-                               nil t nil nil (caar my-mu4e-account-alist))))
-           (account-vars (cdr (assoc account my-mu4e-account-alist))))
-      (if account-vars
-          (mapc #'(lambda (var)
-                    (set (car var) (cadr var)))
-                account-vars)
-        (error "No email account found"))))
+  ;; (defun my-mu4e-set-account ()
+  ;;   "Set the account for composing a message."
+  ;;   (let* ((account
+  ;;           (if mu4e-compose-parent-message
+  ;;               (let ((maildir (mu4e-message-field mu4e-compose-parent-message :maildir)))
+  ;;                 (string-match "/\\(.*?\\)/" maildir)
+  ;;                 (match-string 1 maildir))
+  ;;             (completing-read (format "Compose with account: (%s) "
+  ;;                                      (mapconcat #'(lambda (var) (car var))
+  ;;                                                 my-mu4e-account-alist "/"))
+  ;;                              (mapcar #'(lambda (var) (car var)) my-mu4e-account-alist)
+  ;;                              nil t nil nil (caar my-mu4e-account-alist))))
+  ;;          (account-vars (cdr (assoc account my-mu4e-account-alist))))
+  ;;     (if account-vars
+  ;;         (mapc #'(lambda (var)
+  ;;                   (set (car var) (cadr var)))
+  ;;               account-vars)
+  ;;       (error "No email account found"))))
 
-  ;; ask for account when composing mail
-  (add-hook 'mu4e-compose-pre-hook 'my-mu4e-set-account)
+  ;; ;; ask for account when composing mail
+  ;; (add-hook 'mu4e-compose-pre-hook 'my-mu4e-set-account)
 
-  ; Default value
-  (setq mu4e-sent-folder "/iastate/sent")
-  (setq mu4e-drafts-folder "/iastate/drafts")
-  (setq mu4e-trash-folder "/iastate/trash")
-  (setq mu4e-refile-folder "/iastate/archive")
+  ;; ; Default value
+  ;; (setq mu4e-sent-folder "/iastate/sent")
+  ;; (setq mu4e-drafts-folder "/iastate/drafts")
+  ;; (setq mu4e-trash-folder "/iastate/trash")
+  ;; (setq mu4e-refile-folder "/iastate/archive")
 
-  (defvar my-mu4e-account-alist
-    '(("gmail"
-       (user-mail-address  "tom.brantseg@gmail.com")
-       (user-full-name     "Tom Brantseg")
-       (mu4e-sent-folder   "/gmail/sent")
-       (mu4e-drafts-folder "/gmail/drafts")
-       (mu4e-trash-folder  "/gmail/trash")
-       (mu4e-refile-folder "/gmail/archive"))
-      ("iastate"
-       (user-mail-address  "tbrantse@iastate.edu")
-       (user-full-name     "Thomas Brantseg")
-       (mu4e-sent-folder   "/iastate/sent")
-       (mu4e-drafts-folder "/iastate/draft")
-       (mu4e-trash-folder  "/iastate/trash")
-       (mu4e-refile-folder "/iastate/archive"))))
+  ;; (defvar my-mu4e-account-alist
+  ;;   '(("gmail"
+  ;;      (user-mail-address  "tom.brantseg@gmail.com")
+  ;;      (user-full-name     "Tom Brantseg")
+  ;;      (mu4e-sent-folder   "/gmail/sent")
+  ;;      (mu4e-drafts-folder "/gmail/drafts")
+  ;;      (mu4e-trash-folder  "/gmail/trash")
+  ;;      (mu4e-refile-folder "/gmail/archive"))
+  ;;     ("iastate"
+  ;;      (user-mail-address  "tbrantse@iastate.edu")
+  ;;      (user-full-name     "Thomas Brantseg")
+  ;;      (mu4e-sent-folder   "/iastate/sent")
+  ;;      (mu4e-drafts-folder "/iastate/draft")
+  ;;      (mu4e-trash-folder  "/iastate/trash")
+  ;;      (mu4e-refile-folder "/iastate/archive"))))
 
-  (setq mu4e-user-mail-address-list
-        (mapcar (lambda (account) (cadr (assq 'user-mail-address account)))
-                my-mu4e-account-alist))
+  ;; (setq mu4e-user-mail-address-list
+  ;;       (mapcar (lambda (account) (cadr (assq 'user-mail-address account)))
+  ;;               my-mu4e-account-alist))
 #+END_SRC
 
 Finally we'll use =msmtp= to send mail.
 #+BEGIN_SRC emacs-lisp
-; use msmtp
-(setq message-send-mail-function 'message-send-mail-with-sendmail)
-(setq sendmail-program "/opt/local/bin/msmtp")
-; tell msmtp to choose the SMTP server according to the from field in the outgoing email
-(setq message-sendmail-f-is-evil 't)
-(setq message-sendmail-extra-arguments '("--read-envelope-from"))
+  ; use msmtp
+  ;; (setq message-send-mail-function 'message-send-mail-with-sendmail)
+  ;; (setq sendmail-program "/opt/local/bin/msmtp")
+  ;; ; tell msmtp to choose the SMTP server according to the from field in the outgoing email
+  ;; (setq message-sendmail-f-is-evil 't)
+  ;; (setq message-sendmail-extra-arguments '("--read-envelope-from"))
 #+END_SRC
 
 Finally finally, we'll set mu4e to automatically check for new mail and update the database every five minutes. The line about change file names when moving ensures that mbsync doesn't get confused when messages are refiled to different folders.
 #+BEGIN_SRC emacs-lisp
-  (setq mu4e-change-filenames-when-moving t)
-  (setq mu4e-update-interval 300)
+  ;; (setq mu4e-change-filenames-when-moving t)
+  ;; (setq mu4e-update-interval 300)
 #+END_SRC
 
 And finally FINALLY finally, we'll use the =mu4e-alert= package to pop up a notification when we have a new message, then launch mu4e in the background.
 #+BEGIN_SRC emacs-lisp
-  (mu4e-alert-set-default-style 'notifier)
-  (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
-  (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
-  (mu4e 0)
+  ;; (mu4e-alert-set-default-style 'notifier)
+  ;; (add-hook 'after-init-hook #'mu4e-alert-enable-notifications)
+  ;; (add-hook 'after-init-hook #'mu4e-alert-enable-mode-line-display)
+  ;; (mu4e 0)
 #+END_SRC
 * Terminal mode setup
 Ansi-term in emacs is almost a great terminal emulator, which can be nice to have within emacs. We just need to do a few basic tweaks to improve it, from [[http://echosa.github.io/blog/2012/06/06/improving-ansi-term/][this article]]. First, we want to kill the buffer after we exit a terminal session.
@@ -871,7 +871,7 @@ We also want to make sure we can actually use rtags for completion in a file. Th
 
 Finally, let's start the server, but make sure only one instance is running. I think in older versions this had to be done manually in a terminal (ick) but thankfully it's done entirely internally now.
 #+BEGIN_SRC emacs-lisp
-  (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
+   (add-hook 'c++-mode-hook 'rtags-start-process-unless-running)
 #+END_SRC
 
 ** Rtags for syntax checking
@@ -936,7 +936,7 @@ I don't know precisely what Anaconda does, but it seems to provide some pretty g
 
 We also want to use =company-anaconda= for python completion - it provides excellent context-sensitive completion and documentation for candidates.
 #+BEGIN_SRC emacs-lisp  
-  (add-hook 'elpy-mode-hook (lambda ()
+  (add-hook 'python-mode-hook (lambda ()
                                 (make-local-variable 'company-backends)
                                 (add-to-list 'company-backends 'company-anaconda)))
 #+END_SRC
