@@ -337,6 +337,15 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :bind
     (("C-x g" . magit-status)))
 #+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package magithub
+    :ensure t
+    :after magit
+    :config
+    (magithub-feature-autoinject t))
+#+END_SRC
+
 * Company
 #+BEGIN_SRC emacs-lisp
   (use-package company
@@ -456,6 +465,330 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
  
   (setq compilation-scroll-output 1)
 #+END_SRC
+* Python
+** Anaconda
+#+BEGIN_SRC emacs-lisp
+  (use-package company-anaconda
+    :ensure t
+    :init
+    (add-hook 'python-mode-hook 'anaconda-mode)
+    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+    (add-hook 'python-mode-hook 'flycheck-mode)
+    (add-hook 'python-mode-hook (lambda ()
+                                (make-local-variable 'company-backends)
+                                (add-to-list 'company-backends 'company-anaconda))))
+#+END_SRC
+
+** IPython
+#+BEGIN_SRC emacs-lisp
+(setq python-shell-interpreter "ipython")
+(setq python-shell-interpreter-args "--simple-prompt -i")
+(setq python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
+(setq python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: ")
+#+END_SRC
+
+** Other Python settings
+#+BEGIN_SRC emacs-lisp
+(setq py-force-py-shell-name-p t)
+(setq py-shell-switch-buffers-on-execute-p t)
+(setq py-switch-buffers-on-execute-p t)
+(setq py-split-windows-on-execute-p nil)
+(setq py-smart-indentation t)
+#+END_SRC
+
+* LaTeX
+** Hooks
+#+BEGIN_SRC emacs-lisp
+(add-hook 'LaTeX-mode-hook 'visual-line-mode)
+(add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+(defun turn-on-outline-minor-mode()
+  (outline-minor-mode 1))
+
+(add-hook 'LaTeX-mode-hook 'turn-on-outline-minor-mode)
+(setq outline-minor-mode-prefix "\C-c \C-o")
+#+END_SRC
+
+** LaTeXMk
+#+BEGIN_SRC emacs-lisp
+  (use-package auctex-latexmk
+    :ensure t
+    :init
+    (setq auctex-latexmk-inherit-TeX-PDF-mode t)
+    :config
+    (auctex-latexmk-setup))
+#+END_SRC
+
+** RefTeX
+coming soon
+
+* Org
+#+BEGIN_SRC emacs-lisp
+  (use-package org
+    :ensure t)
+#+END_SRC
+
+** Org-ref
+#+BEGIN_SRC emacs-lisp
+  (use-package org-ref
+    :ensure t
+
+    :init
+    (setq org-ref-default-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
+    (setq org-ref-pdf-directory "~/Documents/Papers")
+    (setq bibtex-completion-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib")))
+#+END_SRC
+
+** Org-LaTeX
+#+BEGIN_SRC emacs-lisp
+    (setq org-latex-pdf-process (list "/opt/local/bin/latexmk -f -pdf %f"))
+    (setq org-latex-hyperref-template nil)
+    (add-to-list 'org-latex-classes
+                 '("aastex"
+                   "\\documentclass{aastex}
+  [NO-DEFAULT-PACKAGES]
+  [PACKAGES]
+  [EXTRA]"
+                   ("\\section{%s}" . "\\section*{%s}")
+                   ("\\subsection{%s}" . "\\subsection*{%s}")
+                   ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                   ("\\paragraph{%s}" . "\\paragraph*{%s}")
+                   ("\\subparagraph{%s}" . "\\subparagraph*{%s}")))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package pdf-tools
+    :ensure t
+
+    :init
+    (setq doc-view-ghostscript-program "/opt/local/bin/gs")
+    (setq revert-without-query '("\\.pdf\\'"))
+    (delete '("\\.pdf\\'" . default) org-file-apps)
+    (add-to-list 'org-file-apps '("\\.pdf\\'" . find-file-other-window))
+
+    :config
+    (pdf-tools-install))
+#+END_SRC
+** Org-babel
+#+BEGIN_SRC emacs-lisp
+  (use-package ob-ipython
+    :ensure t
+    :demand t
+    :init
+    (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+    (setq ob-ipython-command "ipython")
+    (add-hook 'python-mode-hook
+              '(lambda () (define-key python-mode-map (kbd "M-<tab>") 'ob-ipython-inspect)))
+    (defun my-babel-languages ()
+      (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
+      (org-babel-do-load-languages   
+       'org-babel-load-languages
+       '((dot . t)
+         (emacs-lisp t)
+         (ditaa . t)
+         (python . t)
+         (ipython . t)
+         (shell . t)
+         (gnuplot . t)
+         (plantuml . t)
+         (python . t))))
+    (add-hook 'org-mode-hook 'my-babel-languages)
+
+    (defun insert-csv-file-as-org-table (filename)
+      "Insert a file into the current buffer at point, and convert it to an org table."
+      (interactive (list (read-file-name "csv file: ")))
+      (let* ((start (point))
+             (end (+ start (nth 1 (insert-file-contents filename)))))
+        (org-table-convert-region start end)))
+
+    (setq org-confirm-babel-evaluate nil)
+    (defun my-library-of-babel-setup ()
+      (org-babel-lob-ingest "~/emacs-init/code_blocks.org"))
+    (add-hook 'after-init-hook #'my-library-of-babel-setup)
+
+    :bind
+    (:map org-mode-map
+          ("C-c f" . insert-csv-file-as-org-table)))
+#+END_SRC
+
+** Org-agenda
+#+BEGIN_SRC emacs-lisp
+  (use-package org-agenda
+    :ensure t
+
+    :init
+    (setq org-agenda-files (list "~/org/work.org" "~/org/home.org" "~/org/todo.org"))
+    (add-to-list 'org-agenda-files (expand-file-name "~/Research/Wiki"))
+    (setq org-log-done 'time)
+    (setq org-agenda-include-diary t)
+    (setq org-agenda-custom-commands
+        '(("c" "Simple agenda view"
+           ((agenda "")
+            (alltodo "")))))
+  
+    (defun tb-org-agenda-capture (&optional vanilla)
+    "Capture a task in agenda mode, using the date at point. If VANILLA is non-nil, run the standard `org-capture'."
+    (interactive "P")
+    (if vanilla
+        (org-capture)
+      (let ((org-overriding-default-time (org-get-cursor-date)))
+        (org-capture nil "a"))))
+
+
+    :bind
+    (("C-c l" . org-store-link)
+     ("C-c a" . org-agenda)
+     :map org-agenda-mode-map
+     ("c" . tb-org-agenda-capture)))
+#+END_SRC
+
+* Hydras
+#+BEGIN_SRC emacs-lisp
+  (use-package hydra
+    :ensure t
+    :init
+    (defhydra tb-system-hydra (:color blue :hint nil)
+      "
+  File system commands:
+  ---------------
+  _s_: Open eshell
+  _t_: Open plain terminal
+  _d_: Open dired in current directory
+  _p_: Find file in project
+  _g_: grep in project
+  "
+      ("s" eshell)
+      ("t" ansi-term)
+      ("d" dired)
+      ("p" projectile-find-file)
+      ("g" projectile-grep))
+
+    (defhydra tb-info-hydra (:color blue :hint nil)
+  "
+  Emacs environment (describe):
+  ----------------------------
+  _k_: Describe key binding
+  _v_: Describe variable
+  _f_: Describe function
+  _m_: Describe current mode
+  "
+  ("k" describe-key)
+  ("v" describe-variable)
+  ("f" describe-function)
+  ("m" describe-mode))
+
+    (defhydra tb-grep-hydra (:color blue :hint nil)
+  "
+  Search functions:
+  ----------------
+  _d_: Grep in directory...
+  _p_: Grep in project...
+  "
+  ("p" projectile-grep)
+  ("d" find-grep-dired))
+
+    (defun tb-gchat-helper ()
+    (interactive)
+    (jabber-connect-all)
+    (call-interactively 'jabber-chat-with))
+
+  (defhydra tb-utility-hydra (:color blue :hint nil)
+  "
+  Desk utilities:
+  ----------
+  _c_: calculator
+  _d_: calendar
+  _g_: Google Talk...
+  _j_: New journal entry
+  _m_: Read new email
+  "
+  ("c" calc)
+  ("d" calendar)
+  ("g" jabber-connect-all)
+  ("j" org-journal-new-entry)
+  ("m" (lambda() (interactive) (mu4e-alert-view-unread-mails)))
+  )
+
+  (defhydra tb-config-hydra (:color blue :hint nil)
+  "
+  Configuration functions
+  -----------------------
+  _c_: Open emacs-init.org
+  _r_: Reload configuration
+  _e_: Open .emacs
+  _p_: List packages
+  _g_: Customize group
+  "
+  ("c" (find-file "~/emacs-init/emacs-init.org"))
+  ("e" (find-file "~/.emacs"))
+  ("r" (load-file "~/emacs-init/emacs-init.el"))
+  ("p" package-list-packages)
+  ("g" customize-group))
+
+  (defhydra hydra-outline (:color pink :hint nil)
+    "
+  ^Hide^             ^Show^           ^Move
+  ^^^^^^------------------------------------------------------
+  _q_: sublevels     _a_: all         _u_: up
+  _t_: body          _e_: entry       _n_: next visible
+  _o_: other         _i_: children    _p_: previous visible
+  _c_: entry         _k_: branches    _f_: forward same level
+  _l_: leaves        _s_: subtree     _b_: backward same level
+  _d_: subtree
+
+  "
+    ;; Hide
+    ("q" outline-hide-sublevels)    ; Hide everything but the top-level headings
+    ("t" outline-hide-body)         ; Hide everything but headings (all body lines)
+    ("o" outline-hide-other)        ; Hide other branches
+    ("c" outline-hide-entry)        ; Hide this entry's body
+    ("l" outline-hide-leaves)       ; Hide body lines in this entry and sub-entries
+    ("d" outline-hide-subtree)      ; Hide everything in this entry and sub-entries
+    ;; Show
+    ("a" outline-show-all)          ; Show (expand) everything
+    ("e" outline-show-entry)        ; Show this heading's body
+    ("i" outline-show-children)     ; Show this heading's immediate child sub-headings
+    ("k" outline-show-branches)     ; Show all sub-headings under this heading
+    ("s" outline-show-subtree)      ; Show (expand) everything in this heading & below
+    ;; Move
+    ("u" outline-up-heading)                ; Up
+    ("n" outline-next-visible-heading)      ; Next
+    ("p" outline-previous-visible-heading)  ; Previous
+    ("f" outline-forward-same-level)        ; Forward - same level
+    ("b" outline-backward-same-level)       ; Backward - same level
+    ("z" nil "leave"))
+
+  :bind
+  (("C-c s" . tb-system-hydra/body)
+   ("C-c e" . tb-info-hydra/body)
+   ("C-c f" . tb-grep-hydra/body)
+   ("C-c u" . tb-utility-hydra/body)
+   ("C-c c" . tb-config-hydra/body)
+   ("C-c o" . hydra-outline/body)))
+#+END_SRC
+
+* Jabber
+#+BEGIN_SRC emacs-lisp
+  (use-package jabber
+    :ensure t
+    :init
+    (setq jabber-history-enabled t)
+    (setq jabber-use-global-history nil)
+    (setq jabber-backlog-number 40)
+    (setq jabber-backlog-days 30))
+#+END_SRC
+* Tramp
+#+BEGIN_SRC emacs-lisp
+(setq tramp-default-method "ssh")
+(setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
+#+END_SRC
+
+* Final setup
+#+BEGIN_SRC emacs-lisp
+(load-file "~/emacs-init/secret.el")
+(appt-activate)
+(display-time)
+#+END_SRC
+
 * End
 So, we're done. The last thing we have to do is let the main =.emacs= know we have the tangled elisp file ready to go.
 #+BEGIN_SRC emacs-lisp
