@@ -187,10 +187,10 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package lush-theme
+  (use-package zenburn-theme
     :ensure t
     :config
-    (load-theme 'lush t))
+    (load-theme 'zenburn t))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -376,6 +376,12 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :init
     (add-hook 'c++-mode-hook 'flycheck-mode)
     (add-hook 'c-mode-hook 'flycheck-mode))
+  (use-package flycheck-rtags
+    :ensure t
+    :after flycheck)
+  (use-package flycheck-irony
+    :ensure t
+    :after flycheck)
 #+END_SRC
 * CMake IDE
 #+BEGIN_SRC emacs-lisp
@@ -466,17 +472,26 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   (setq compilation-scroll-output 1)
 #+END_SRC
 * Python
-** Anaconda
+# ** Anaconda
+# #+BEGIN_SRC emacs-lisp
+#   (use-package company-anaconda
+#     :ensure t
+#     :init
+#     (add-hook 'python-mode-hook 'anaconda-mode)
+#     (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+#     (add-hook 'python-mode-hook 'flycheck-mode)
+#     (add-hook 'python-mode-hook (lambda ()
+#                                 (make-local-variable 'company-backends)
+#                                 (add-to-list 'company-backends 'company-anaconda))))
+# #+END_SRC
+
+** Elpy
 #+BEGIN_SRC emacs-lisp
-  (use-package company-anaconda
+  (use-package elpy
     :ensure t
-    :init
-    (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-    (add-hook 'python-mode-hook 'flycheck-mode)
-    (add-hook 'python-mode-hook (lambda ()
-                                (make-local-variable 'company-backends)
-                                (add-to-list 'company-backends 'company-anaconda))))
+    :config
+    (elpy-enable)
+    (elpy-use-ipython))
 #+END_SRC
 
 ** IPython
