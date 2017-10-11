@@ -205,11 +205,17 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (sml/setup))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+  (if (eq window-system 'ns)
+      (setq ns-use-native-fullscreen nil))
+#+END_SRC
+
 ** Menus and line numbers
 #+BEGIN_SRC emacs-lisp
   (unless window-system
     (menu-bar-mode -1))
   (tool-bar-mode -1)
+  (scroll-bar-mode -1)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -247,12 +253,24 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 	(setq mac-command-modifier 'meta)))
 #+END_SRC
 
+* Dired
+#+BEGIN_SRC emacs-lisp
+  (use-package dired-x
+    :ensure t
+    :after dired
+    :init
+    (add-hook 'dired-mode-hook (lambda () (dired-omit-mode 1))))
+#+END_SRC
+
+#+RESULTS:
+: dired-x
+
 * Helm
 ** Helm Core
 #+BEGIN_SRC emacs-lisp
   (use-package helm
     :ensure t
-  
+
     :init
     (global-unset-key (kbd "C-x c"))
     (when (executable-find "curl")
@@ -268,14 +286,16 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
     :config
     (add-to-list 'helm-sources-using-default-as-input 'helm-source-man-pages)
+    (helm-mode 1)
     (helm-autoresize-mode t)
-  
+
     :bind
     (("C-c h" . helm-command-prefix)
      ("M-x" . helm-M-x)
      ("C-x b" . helm-mini)
      ("C-x C-f" . helm-find-files)
      ("M-y" . helm-show-kill-ring)
+
      :map helm-map
      ("<tab>" . helm-execute-persistent-action)
      ("C-i" . helm-execute-persistent-action)
@@ -324,11 +344,12 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
     :config
     (projectile-mode)
+    (helm-projectile-on)
 
     :bind
     (:map c-mode-base-map
-	  ("<f6>" . projectile-find-other-file)
-	  ("<f7>" . projectile-find-other-file-other-window)))
+      ("<f6>" . projectile-find-other-file)
+      ("<f7>" . projectile-find-other-file-other-window)))
 #+END_SRC
 * Magit
 #+BEGIN_SRC emacs-lisp
@@ -386,7 +407,12 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 * CMake IDE
 #+BEGIN_SRC emacs-lisp
   (use-package rtags
-    :ensure t)
+    :ensure t
+    :init
+    (setq rtags-use-helm t)
+    (rtags-enable-standard-keybindings)
+    (setq rtags-autostart-diagnostics t)
+    (setq rtags-completions-enabled t))
   (use-package cpputils-cmake
     :ensure t
     :init
@@ -397,6 +423,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
                 ))))
   (use-package cmake-ide
     :ensure t
+    :after rtags
     :config
     (cmake-ide-setup))
 #+END_SRC
@@ -472,26 +499,29 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   (setq compilation-scroll-output 1)
 #+END_SRC
 * Python
-# ** Anaconda
-# #+BEGIN_SRC emacs-lisp
-#   (use-package company-anaconda
-#     :ensure t
-#     :init
-#     (add-hook 'python-mode-hook 'anaconda-mode)
-#     (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-#     (add-hook 'python-mode-hook 'flycheck-mode)
-#     (add-hook 'python-mode-hook (lambda ()
-#                                 (make-local-variable 'company-backends)
-#                                 (add-to-list 'company-backends 'company-anaconda))))
-# #+END_SRC
-
-** Elpy
+** Anaconda
 #+BEGIN_SRC emacs-lisp
-  (use-package elpy
+  (use-package company-anaconda
     :ensure t
+    :after python
+    :init
+    (add-hook 'python-mode-hook 'anaconda-mode)
+    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+    (add-hook 'python-mode-hook 'flycheck-mode)
+    (add-hook 'python-mode-hook (lambda ()
+                                (make-local-variable 'company-backends)
+                                (add-to-list 'company-backends 'company-anaconda))))
+#+END_SRC
+** Environments
+#+BEGIN_SRC emacs-lisp
+  (use-package conda
+    :ensure t
+    :init
+    (setq conda-anaconda-home "/Users/tbrantse/miniconda3")
     :config
-    (elpy-enable)
-    (elpy-use-ipython))
+    (conda-env-initialize-interactive-shells)
+    (conda-env-initialize-eshell)
+    (conda-env-autoactivate-mode t))
 #+END_SRC
 
 ** IPython
@@ -587,9 +617,10 @@ coming soon
 #+BEGIN_SRC emacs-lisp
   (use-package ob-ipython
     :ensure t
-    :demand t
+    :after org
     :init
     (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+    (add-to-list 'company-backends 'company-ob-ipython)
     (setq ob-ipython-command "ipython")
     (add-hook 'python-mode-hook
               '(lambda () (define-key python-mode-map (kbd "M-<tab>") 'ob-ipython-inspect)))
@@ -631,7 +662,7 @@ coming soon
     :ensure t
 
     :init
-    (setq org-agenda-files (list "~/org/work.org" "~/org/home.org" "~/org/todo.org"))
+    (setq org-agenda-files (list "~/org/work.org" "~/org/home.org" "~/org/todo.org" "~/org/agenda.org"))
     (add-to-list 'org-agenda-files (expand-file-name "~/Research/Wiki"))
     (setq org-log-done 'time)
     (setq org-agenda-include-diary t)
@@ -714,13 +745,12 @@ coming soon
   _d_: calendar
   _g_: Google Talk...
   _j_: New journal entry
-  _m_: Read new email
   "
   ("c" calc)
   ("d" calendar)
   ("g" jabber-connect-all)
   ("j" org-journal-new-entry)
-  ("m" (lambda() (interactive) (mu4e-alert-view-unread-mails)))
+;;  ("m" (lambda() (interactive) (mu4e-alert-view-unread-mails)))
   )
 
   (defhydra tb-config-hydra (:color blue :hint nil)
