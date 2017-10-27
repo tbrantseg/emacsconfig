@@ -38,6 +38,7 @@ This section is intended to get you up and running.
 ** Installation
 *** Installing Emacs
 This config has been tested to work with Emacs 24 (MacPorts and Emacs.app), the Emacs 24 =emacs-mac-app=, and Emacs 25.0 and 25.1. Pick your poison:
+**** Mac
 - I believe the vanilla build from MacPorts has a few differences from the main source line, but I'm not sure what they are. To get vanilla Emacs from MacPorts, type
 #+BEGIN_SRC sh :tangle no
   sudo port -v install emacs-app
@@ -56,6 +57,9 @@ then change to the =emacs= directory and run
   make install
 #+END_SRC
 to build. The final product should be in =emacs/nextstep/Emacs.app=, which you can just move to your Applications folder.
+
+**** Linux
+Still in progress
 
 *** Init files (this repo)
 This section contains bootstrapping code for generating the actual =emacs-init.el= file that =.emacs= will load.
@@ -116,17 +120,17 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-screen t)
   (setq initial-scratch-message
-	(concat
-	 (concat ";; GNU Emacs " emacs-version  "\n")
-	 (concat ";; Build system: " system-configuration "\n")
-	 (concat ";; Build date/time: "
-		 (format-time-string "%Y-%m-%d %T" emacs-build-time) "\n\n")
-	  ";; C-j: Evaluate Lisp expression within this buffer\n\n"
-	  ";; C-x b: Select buffer menu\n"
-	  ";; C-x f: Create file\n"
-	  ";; C-c u: Desk utilities menu\n"
-	  ";; C-c p p: Jump to project\n"
-	  ";; C-c c: Emacs config menu\n\n"))
+    (concat
+     (concat ";; GNU Emacs " emacs-version  "\n")
+     (concat ";; Build system: " system-configuration "\n")
+     (concat ";; Build date/time: "
+         (format-time-string "%Y-%m-%d %T" emacs-build-time) "\n\n")
+      ";; C-j: Evaluate Lisp expression within this buffer\n\n"
+      ";; C-x b: Select buffer menu\n"
+      ";; C-x f: Create file\n"
+      ";; C-c u: Desk utilities menu\n"
+      ";; C-c p p: Jump to project\n"
+      ";; C-c c: Emacs config menu\n\n"))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -187,10 +191,10 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package zenburn-theme
+  (use-package color-theme-sanityinc-tomorrow
     :ensure t
     :config
-    (load-theme 'zenburn t))
+    (load-theme 'sanityinc-tomorrow-eighties t))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -216,6 +220,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (menu-bar-mode -1))
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
+  (visual-line-mode)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -225,22 +230,16 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :init
     (defun my-add-to-multiple-hooks (function hooks)
     (mapc (lambda (hook)
-	    (add-hook hook function))
-	  hooks))
+        (add-hook hook function))
+          hooks))
+
+    (defun tb/set-linum-format ()
+      (unless window-system
+        (setq nlinum-format "%d ")))
 
     :config
-    (my-add-to-multiple-hooks
-     'nlinum-mode
-     '(c++-mode-hook
-       sql-mode-hook
-       python-mode-hook
-       LaTeX-mode-hook
-       sh-mode-hook
-       emacs-lisp-mode-hook
-       autoconf-mode-hook
-       makefile-mode-hook
-       makefile-automake-mode-hook
-       cmake-mode-hook))
+    (add-hook 'prog-mode-hook 'nlinum-mode)
+    (add-hook 'before-make-frame-hook 'tb/set-linum-format)
 
     :bind
     ("<M-f10>" . nlinum-mode))
@@ -261,9 +260,6 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :init
     (add-hook 'dired-mode-hook (lambda () (dired-omit-mode 1))))
 #+END_SRC
-
-#+RESULTS:
-: dired-x
 
 * Helm
 ** Helm Core
@@ -344,10 +340,9 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
     :config
     (projectile-mode)
-    (helm-projectile-on)
 
     :bind
-    (:map c-mode-base-map
+    (:map c++-mode-map
       ("<f6>" . projectile-find-other-file)
       ("<f7>" . projectile-find-other-file-other-window)))
 #+END_SRC
@@ -367,7 +362,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (magithub-feature-autoinject t))
 #+END_SRC
 
-* Company
+* Autocompletion
 #+BEGIN_SRC emacs-lisp
   (use-package company
     :ensure t
@@ -378,7 +373,38 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (setq company-idle-delay 0)
     :config
     (global-company-mode))
+
+  (use-package company-ycmd
+    :ensure t
+    :after company)
+
+  (use-package flycheck-ycmd
+    :ensure t
+    :after company)
+
+  (use-package ycmd
+    :ensure t
+    :init
+    (setq ycmd-server-command (list "python" "/soft/src/ycmd/ycmd"))
+    (add-hook 'ycmd-mode-hook 'company-ycmd-setup)
+    (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
+    (add-hook 'emacs-lisp-mode-hook '(lambda () (ycmd-mode -1)))
+    (setq ycmd-startup-timeout 20)
+    :config
+    (global-ycmd-mode))
+
+  (use-package company-ycmd
+    :ensure t
+    :init
+    (add-hook 'ycmd-mode-hook 'company-ycmd-setup))
+
+  (use-package flycheck-ycmd
+    :ensure t
+    :init
+    (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup))
+
 #+END_SRC
+
 ** Subsidiary packages
 #+BEGIN_SRC emacs-lisp
   (use-package company-clang
@@ -404,29 +430,29 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :ensure t
     :after flycheck)
 #+END_SRC
-* CMake IDE
-#+BEGIN_SRC emacs-lisp
-  (use-package rtags
-    :ensure t
-    :init
-    (setq rtags-use-helm t)
-    (rtags-enable-standard-keybindings)
-    (setq rtags-autostart-diagnostics t)
-    (setq rtags-completions-enabled t))
-  (use-package cpputils-cmake
-    :ensure t
-    :init
-    (add-hook 'c-mode-common-hook
-            (lambda ()
-              (if (derived-mode-p 'c-mode 'c++-mode)
-                  (cppcm-reload-all)
-                ))))
-  (use-package cmake-ide
-    :ensure t
-    :after rtags
-    :config
-    (cmake-ide-setup))
-#+END_SRC
+# * CMake IDE
+# #+BEGIN_SRC emacs-lisp
+#   (use-package rtags
+#     :ensure t
+#     :init
+#     (setq rtags-use-helm t)
+#     (rtags-enable-standard-keybindings)
+#     (setq rtags-autostart-diagnostics t)
+#     (setq rtags-completions-enabled t))
+#   (use-package cpputils-cmake
+#     :ensure t
+#     :init
+#     (add-hook 'c-mode-common-hook
+#             (lambda ()
+#               (if (derived-mode-p 'c-mode 'c++-mode)
+#                   (cppcm-reload-all)
+#                 ))))
+#   (use-package cmake-ide
+#     :ensure t
+#     :after rtags
+#     :config
+#     (cmake-ide-setup))
+# #+END_SRC
 * Minor modes
 ** YASnippet
 #+BEGIN_SRC emacs-lisp
@@ -460,6 +486,17 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :ensure t
     :config
     (firestarter-mode))
+#+END_SRC
+
+** Which-key
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :ensure t
+    :defer 10
+    :config
+    (setq which-key-popup-type 'side-window)
+    (setq which-key-compute-remaps t)
+    (which-key-mode 1))
 #+END_SRC
 
 ** Highlight indentation
@@ -501,27 +538,40 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 * Python
 ** Anaconda
 #+BEGIN_SRC emacs-lisp
-  (use-package company-anaconda
-    :ensure t
-    :after python
-    :init
-    (add-hook 'python-mode-hook 'anaconda-mode)
-    (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
-    (add-hook 'python-mode-hook 'flycheck-mode)
-    (add-hook 'python-mode-hook (lambda ()
-                                (make-local-variable 'company-backends)
-                                (add-to-list 'company-backends 'company-anaconda))))
+  ;; (use-package company-anaconda
+  ;;   :ensure t
+  ;;   :after python
+  ;;   :init
+  ;;   (add-hook 'python-mode-hook 'anaconda-mode)
+  ;;   (add-hook 'python-mode-hook 'anaconda-eldoc-mode)
+  ;;   (add-hook 'python-mode-hook 'flycheck-mode)
+  ;;   (add-hook 'python-mode-hook (lambda ()
+  ;;                               (make-local-variable 'company-backends)
+  ;;                               (add-to-list 'company-backends 'company-anaconda))))
 #+END_SRC
+# ** Jedi
+# #+BEGIN_SRC emacs-lisp
+#   (use-package company-jedi
+#     :ensure t
+#     :config
+#     (setq jedi:environment-virtualenv (list (expand-file-name "~/.emacs.d/.python-environments/")))
+#     (add-hook 'python-mode-hook 'jedi:setup)
+#     (setq jedi:complete-on-dot t)
+#     (setq jedi:use-shortcuts t)
+#     (defun tb/enable-company-jedi ()
+#       (add-to-list 'company-backends 'company-jedi))
+#     (add-hook 'python-mode-hook 'tb/enable-company-jedi))
+# #+END_SRC
 ** Environments
 #+BEGIN_SRC emacs-lisp
   (use-package conda
     :ensure t
     :init
-    (setq conda-anaconda-home "/Users/tbrantse/miniconda3")
+    (setq conda-anaconda-home "/Users/tbrantse/miniconda2")
     :config
     (conda-env-initialize-interactive-shells)
     (conda-env-initialize-eshell)
-    (conda-env-autoactivate-mode t))
+    (add-hook 'python-mode-hook 'conda-env-autoactivate-mode))
 #+END_SRC
 
 ** IPython
@@ -617,6 +667,7 @@ coming soon
 #+BEGIN_SRC emacs-lisp
   (use-package ob-ipython
     :ensure t
+    :defer t
     :after org
     :init
     (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
@@ -689,126 +740,126 @@ coming soon
 
 * Hydras
 #+BEGIN_SRC emacs-lisp
-  (use-package hydra
-    :ensure t
-    :init
-    (defhydra tb-system-hydra (:color blue :hint nil)
-      "
-  File system commands:
-  ---------------
-  _s_: Open eshell
-  _t_: Open plain terminal
-  _d_: Open dired in current directory
-  _p_: Find file in project
-  _g_: grep in project
-  "
-      ("s" eshell)
-      ("t" ansi-term)
-      ("d" dired)
-      ("p" projectile-find-file)
-      ("g" projectile-grep))
-
-    (defhydra tb-info-hydra (:color blue :hint nil)
-  "
-  Emacs environment (describe):
-  ----------------------------
-  _k_: Describe key binding
-  _v_: Describe variable
-  _f_: Describe function
-  _m_: Describe current mode
-  "
-  ("k" describe-key)
-  ("v" describe-variable)
-  ("f" describe-function)
-  ("m" describe-mode))
-
-    (defhydra tb-grep-hydra (:color blue :hint nil)
-  "
-  Search functions:
-  ----------------
-  _d_: Grep in directory...
-  _p_: Grep in project...
-  "
-  ("p" projectile-grep)
-  ("d" find-grep-dired))
-
-    (defun tb-gchat-helper ()
-    (interactive)
-    (jabber-connect-all)
-    (call-interactively 'jabber-chat-with))
-
-  (defhydra tb-utility-hydra (:color blue :hint nil)
-  "
-  Desk utilities:
-  ----------
-  _c_: calculator
-  _d_: calendar
-  _g_: Google Talk...
-  _j_: New journal entry
-  "
-  ("c" calc)
-  ("d" calendar)
-  ("g" jabber-connect-all)
-  ("j" org-journal-new-entry)
-;;  ("m" (lambda() (interactive) (mu4e-alert-view-unread-mails)))
-  )
-
-  (defhydra tb-config-hydra (:color blue :hint nil)
-  "
-  Configuration functions
-  -----------------------
-  _c_: Open emacs-init.org
-  _r_: Reload configuration
-  _e_: Open .emacs
-  _p_: List packages
-  _g_: Customize group
-  "
-  ("c" (find-file "~/emacs-init/emacs-init.org"))
-  ("e" (find-file "~/.emacs"))
-  ("r" (load-file "~/emacs-init/emacs-init.el"))
-  ("p" package-list-packages)
-  ("g" customize-group))
-
-  (defhydra hydra-outline (:color pink :hint nil)
+    (use-package hydra
+      :ensure t
+      :config
+      (defhydra tb-system-hydra (:color blue :hint nil)
+        "
+    File system commands:
+    ---------------
+    _s_: Open eshell
+    _t_: Open plain terminal
+    _d_: Open dired in current directory
+    _p_: Find file in project
+    _g_: grep in project
     "
-  ^Hide^             ^Show^           ^Move
-  ^^^^^^------------------------------------------------------
-  _q_: sublevels     _a_: all         _u_: up
-  _t_: body          _e_: entry       _n_: next visible
-  _o_: other         _i_: children    _p_: previous visible
-  _c_: entry         _k_: branches    _f_: forward same level
-  _l_: leaves        _s_: subtree     _b_: backward same level
-  _d_: subtree
+        ("s" eshell)
+        ("t" ansi-term)
+        ("d" dired)
+        ("p" projectile-find-file)
+        ("g" projectile-grep))
 
-  "
-    ;; Hide
-    ("q" outline-hide-sublevels)    ; Hide everything but the top-level headings
-    ("t" outline-hide-body)         ; Hide everything but headings (all body lines)
-    ("o" outline-hide-other)        ; Hide other branches
-    ("c" outline-hide-entry)        ; Hide this entry's body
-    ("l" outline-hide-leaves)       ; Hide body lines in this entry and sub-entries
-    ("d" outline-hide-subtree)      ; Hide everything in this entry and sub-entries
-    ;; Show
-    ("a" outline-show-all)          ; Show (expand) everything
-    ("e" outline-show-entry)        ; Show this heading's body
-    ("i" outline-show-children)     ; Show this heading's immediate child sub-headings
-    ("k" outline-show-branches)     ; Show all sub-headings under this heading
-    ("s" outline-show-subtree)      ; Show (expand) everything in this heading & below
-    ;; Move
-    ("u" outline-up-heading)                ; Up
-    ("n" outline-next-visible-heading)      ; Next
-    ("p" outline-previous-visible-heading)  ; Previous
-    ("f" outline-forward-same-level)        ; Forward - same level
-    ("b" outline-backward-same-level)       ; Backward - same level
-    ("z" nil "leave"))
+      (defhydra tb-info-hydra (:color blue :hint nil)
+    "
+    Emacs environment (describe):
+    ----------------------------
+    _k_: Describe key binding
+    _v_: Describe variable
+    _f_: Describe function
+    _m_: Describe current mode
+    "
+    ("k" describe-key)
+    ("v" describe-variable)
+    ("f" describe-function)
+    ("m" describe-mode))
 
-  :bind
-  (("C-c s" . tb-system-hydra/body)
-   ("C-c e" . tb-info-hydra/body)
-   ("C-c f" . tb-grep-hydra/body)
-   ("C-c u" . tb-utility-hydra/body)
-   ("C-c c" . tb-config-hydra/body)
-   ("C-c o" . hydra-outline/body)))
+      (defhydra tb-grep-hydra (:color blue :hint nil)
+    "
+    Search functions:
+    ----------------
+    _d_: Grep in directory...
+    _p_: Grep in project...
+    "
+    ("p" projectile-grep)
+    ("d" find-grep-dired))
+
+      (defun tb-gchat-helper ()
+      (interactive)
+      (jabber-connect-all)
+      (call-interactively 'jabber-chat-with))
+
+    (defhydra tb-utility-hydra (:color blue :hint nil)
+    "
+    Desk utilities:
+    ----------
+    _c_: calculator
+    _d_: calendar
+    _g_: Google Talk...
+    _j_: New journal entry
+    "
+    ("c" calc)
+    ("d" calendar)
+    ("g" jabber-connect-all)
+    ("j" org-journal-new-entry)
+  ;;  ("m" (lambda() (interactive) (mu4e-alert-view-unread-mails)))
+    )
+
+    (defhydra tb-config-hydra (:color blue :hint nil)
+    "
+    Configuration functions
+    -----------------------
+    _c_: Open emacs-init.org
+    _r_: Reload configuration
+    _e_: Open .emacs
+    _p_: List packages
+    _g_: Customize group
+    "
+    ("c" (find-file "~/emacs-init/emacs-init.org"))
+    ("e" (find-file "~/.emacs"))
+    ("r" (load-file "~/emacs-init/emacs-init.el"))
+    ("p" package-list-packages)
+    ("g" customize-group))
+
+    (defhydra hydra-outline (:color pink :hint nil)
+      "
+    ^Hide^             ^Show^           ^Move
+    ^^^^^^------------------------------------------------------
+    _q_: sublevels     _a_: all         _u_: up
+    _t_: body          _e_: entry       _n_: next visible
+    _o_: other         _i_: children    _p_: previous visible
+    _c_: entry         _k_: branches    _f_: forward same level
+    _l_: leaves        _s_: subtree     _b_: backward same level
+    _d_: subtree
+
+    "
+      ;; Hide
+      ("q" outline-hide-sublevels)    ; Hide everything but the top-level headings
+      ("t" outline-hide-body)         ; Hide everything but headings (all body lines)
+      ("o" outline-hide-other)        ; Hide other branches
+      ("c" outline-hide-entry)        ; Hide this entry's body
+      ("l" outline-hide-leaves)       ; Hide body lines in this entry and sub-entries
+      ("d" outline-hide-subtree)      ; Hide everything in this entry and sub-entries
+      ;; Show
+      ("a" outline-show-all)          ; Show (expand) everything
+      ("e" outline-show-entry)        ; Show this heading's body
+      ("i" outline-show-children)     ; Show this heading's immediate child sub-headings
+      ("k" outline-show-branches)     ; Show all sub-headings under this heading
+      ("s" outline-show-subtree)      ; Show (expand) everything in this heading & below
+      ;; Move
+      ("u" outline-up-heading)                ; Up
+      ("n" outline-next-visible-heading)      ; Next
+      ("p" outline-previous-visible-heading)  ; Previous
+      ("f" outline-forward-same-level)        ; Forward - same level
+      ("b" outline-backward-same-level)       ; Backward - same level
+      ("z" nil "leave"))
+
+    :bind
+    (("C-c s" . tb-system-hydra/body)
+     ("C-c e" . tb-info-hydra/body)
+     ("C-c f" . tb-grep-hydra/body)
+     ("C-c u" . tb-utility-hydra/body)
+     ("C-c c" . tb-config-hydra/body)
+     ("C-c o" . hydra-outline/body)))
 #+END_SRC
 
 * Jabber
