@@ -187,7 +187,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 ** Font and theme
 #+BEGIN_SRC emacs-lisp
   (set-face-attribute 'default nil
-	      :family "Inconsolata for Powerline" :height 140 :weight 'normal)
+	      :family "Inconsolata for Powerline" :height 110 :weight 'normal)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -220,7 +220,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (menu-bar-mode -1))
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
-  (visual-line-mode)
+  (visual-line-mode 1)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -238,12 +238,18 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
         (setq nlinum-format "%d ")))
 
     :config
-    (add-hook 'prog-mode-hook 'nlinum-mode)
     (add-hook 'before-make-frame-hook 'tb/set-linum-format)
 
     :bind
     ("<M-f10>" . nlinum-mode))
 #+END_SRC
+
+* General hooks and keybinds
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'prog-mode-hook 'nlinum-mode)
+  (bind-key "M-RET" 'comment-indent-new-line)
+#+END_SRC
+
 * OS-specific
 #+BEGIN_SRC emacs-lisp
   (if (memq window-system '(mac ns))
@@ -385,7 +391,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   (use-package ycmd
     :ensure t
     :init
-    (setq ycmd-server-command (list "python" "/soft/src/ycmd/ycmd"))
+    (setq ycmd-server-command (list "python" "/home/tom/soft/ycmd/ycmd"))
     (add-hook 'ycmd-mode-hook 'company-ycmd-setup)
     (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
     (add-hook 'emacs-lisp-mode-hook '(lambda () (ycmd-mode -1)))
@@ -665,6 +671,8 @@ coming soon
 #+END_SRC
 ** Org-babel
 #+BEGIN_SRC emacs-lisp
+  (use-package graphviz-dot-mode :ensure t)
+
   (use-package ob-ipython
     :ensure t
     :defer t
@@ -706,6 +714,8 @@ coming soon
     (:map org-mode-map
           ("C-c f" . insert-csv-file-as-org-table)))
 #+END_SRC
+
+#+RESULTS:
 
 ** Org-agenda
 #+BEGIN_SRC emacs-lisp
