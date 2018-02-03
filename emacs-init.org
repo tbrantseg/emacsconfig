@@ -139,7 +139,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
 #+BEGIN_SRC emacs-lisp
   (setq user-full-name "Thomas Brantseg")
-  (setq user-email-address "tom.brantseg@iastate.edu")
+  (setq user-email-address "tom.brantseg@gmail.com")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -391,7 +391,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   (use-package ycmd
     :ensure t
     :init
-    (setq ycmd-server-command (list "python" "/home/tom/soft/ycmd/ycmd"))
+    (setq ycmd-server-command (list "python" "/home/tom/ycmd/ycmd"))
     (add-hook 'ycmd-mode-hook 'company-ycmd-setup)
     (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup)
     (add-hook 'emacs-lisp-mode-hook '(lambda () (ycmd-mode -1)))
@@ -588,6 +588,13 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 (setq python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: ")
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+  (use-package ein
+    :ensure t)
+#+END_SRC
+
+#+RESULTS:
+
 ** Other Python settings
 #+BEGIN_SRC emacs-lisp
 (setq py-force-py-shell-name-p t)
@@ -596,7 +603,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 (setq py-split-windows-on-execute-p nil)
 (setq py-smart-indentation t)
 #+END_SRC
-
+   
 * LaTeX
 ** Hooks
 #+BEGIN_SRC emacs-lisp
@@ -723,8 +730,7 @@ coming soon
     :ensure t
 
     :init
-    (setq org-agenda-files (list "~/org/work.org" "~/org/home.org" "~/org/todo.org" "~/org/agenda.org"))
-    (add-to-list 'org-agenda-files (expand-file-name "~/Research/Wiki"))
+    (setq org-agenda-files (list "~/org/todo.org"))
     (setq org-log-done 'time)
     (setq org-agenda-include-diary t)
     (setq org-agenda-custom-commands
@@ -893,6 +899,7 @@ coming soon
 (load-file "~/emacs-init/secret.el")
 (appt-activate)
 (display-time)
+(visual-line-mode)
 #+END_SRC
 
 * End
