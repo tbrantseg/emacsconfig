@@ -1,4 +1,4 @@
-#+AUTHOR: Tom Brantseg
+z#+AUTHOR: Tom Brantseg
 #+PROPERTY: header-args :tangle yes
 
 * About
@@ -356,6 +356,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+BEGIN_SRC emacs-lisp
   (use-package magit
     :ensure t
+    :defer t
     :bind
     (("C-x g" . magit-status)))
 #+END_SRC
@@ -363,6 +364,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+BEGIN_SRC emacs-lisp
   (use-package magithub
     :ensure t
+    :defer t
     :after magit
     :config
     (magithub-feature-autoinject t))
@@ -386,10 +388,12 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
   (use-package flycheck-ycmd
     :ensure t
-    :after company)
+    :after ycmd)
 
   (use-package ycmd
     :ensure t
+    :defer t
+    :after company
     :init
     (setq ycmd-server-command (list "python" "/home/tom/ycmd/ycmd"))
     (add-hook 'ycmd-mode-hook 'company-ycmd-setup)
@@ -572,6 +576,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+BEGIN_SRC emacs-lisp
   (use-package conda
     :ensure t
+    :defer t
     :init
     (setq conda-anaconda-home "/Users/tbrantse/miniconda2")
     :config
@@ -687,9 +692,9 @@ coming soon
     :init
     (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
     (add-to-list 'company-backends 'company-ob-ipython)
-    (setq ob-ipython-command "ipython")
     (add-hook 'python-mode-hook
               '(lambda () (define-key python-mode-map (kbd "M-<tab>") 'ob-ipython-inspect)))
+    (setq ob-ipython-command "ipython")
     (defun my-babel-languages ()
       (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
       (org-babel-do-load-languages   
@@ -894,6 +899,12 @@ coming soon
 (setq tramp-shell-prompt-pattern "\\(?:^\\|\r\\)[^]#$%>\n]*#?[]#$%>].* *\\(^[\\[[0-9;]*[a-zA-Z] *\\)*")
 #+END_SRC
 
+* Macros
+#+BEGIN_SRC emacs-lisp
+  (fset 'query_to_gs
+     "'\C-e ',\C-n\C-a")
+  (global-set-key (kbd "C-c q") 'query_to_gs)
+#+END_SRC
 * Final setup
 #+BEGIN_SRC emacs-lisp
 (load-file "~/emacs-init/secret.el")
