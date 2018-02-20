@@ -1,4 +1,4 @@
-z#+AUTHOR: Tom Brantseg
+#+AUTHOR: Tom Brantseg
 #+PROPERTY: header-args :tangle yes
 
 * About
@@ -470,7 +470,13 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :ensure t
     :config
     (yas-global-mode 1))
+
+  (use-package yasnippet-snippets
+    :ensure t
+    :after yasnippet)
 #+END_SRC
+
+#+RESULTS:
 
 ** Smartparens
 #+BEGIN_SRC emacs-lisp
@@ -693,7 +699,7 @@ coming soon
     (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
     (add-to-list 'company-backends 'company-ob-ipython)
     (add-hook 'python-mode-hook
-              '(lambda () (define-key python-mode-map (kbd "M-<tab>") 'ob-ipython-inspect)))
+              '(lambda () (define-key python-mode-map (kbd "C-<tab>") 'ob-ipython-inspect)))
     (setq ob-ipython-command "ipython")
     (defun my-babel-languages ()
       (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
@@ -742,7 +748,7 @@ coming soon
         '(("c" "Simple agenda view"
            ((agenda "")
             (alltodo "")))))
-  
+
     (defun tb-org-agenda-capture (&optional vanilla)
     "Capture a task in agenda mode, using the date at point. If VANILLA is non-nil, run the standard `org-capture'."
     (interactive "P")
@@ -750,7 +756,6 @@ coming soon
         (org-capture)
       (let ((org-overriding-default-time (org-get-cursor-date)))
         (org-capture nil "a"))))
-
 
     :bind
     (("C-c l" . org-store-link)
