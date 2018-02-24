@@ -99,21 +99,18 @@ This lambda function, saved at the very end of the file as an "eval" will cause 
 *** Use-Package 
 Okay, the other thing is to have use-package so we can keep things as orderly as possible. This code block will automatically install =use-package= if not installed, so that it's available for the rest of this config.
 #+BEGIN_SRC emacs-lisp
-  (require 'package)
-  (setq package-enable-at-startup nil)
-  (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
-  (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
-  (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/"))
-  (package-initialize)
+  (let ((bootstrap-file (concat user-emacs-directory "straight/repos/straight.el/bootstrap.el"))
+        (bootstrap-version 3))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
 
-  (unless (package-installed-p 'use-package)
-    (package-refresh-contents)
-    (package-install 'use-package))
-
-  (eval-when-compile
-    (require 'use-package))
-  (use-package bind-key
-    :ensure t)
+  (straight-use-package 'use-package)
 #+END_SRC
 
 * Startup
@@ -643,7 +640,7 @@ coming soon
 * Org
 #+BEGIN_SRC emacs-lisp
   (use-package org
-    :ensure t)
+    :ensure org-plus-contrib)
 #+END_SRC
 
 ** Org-ref
@@ -727,6 +724,9 @@ coming soon
     (defun my-library-of-babel-setup ()
       (org-babel-lob-ingest "~/emacs-init/code_blocks.org"))
     (add-hook 'after-init-hook #'my-library-of-babel-setup)
+
+    (load-file "~/emacs-ext/ox-ipynb/ox-ipynb.el")
+    (require 'ox-ipynb)
 
     :bind
     (:map org-mode-map
