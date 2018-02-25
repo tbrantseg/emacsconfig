@@ -111,6 +111,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (load bootstrap-file nil 'nomessage))
 
   (straight-use-package 'use-package)
+  (use-package bind-key :straight t)
 #+END_SRC
 
 * Startup
@@ -131,7 +132,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package cl)
+  (use-package cl :straight t)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -169,7 +170,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+BEGIN_SRC emacs-lisp
   (use-package exec-path-from-shell
     :if (memq window-system '(mac ns))
-    :ensure t
+    :straight t
     :config
     (exec-path-from-shell-initialize))
 #+END_SRC
@@ -189,16 +190,16 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
 #+BEGIN_SRC emacs-lisp
   (use-package color-theme-sanityinc-tomorrow
-    :ensure t
+    :straight t
     :config
     (load-theme 'sanityinc-tomorrow-eighties t))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
   (use-package smart-mode-line-powerline-theme
-    :ensure t)
+    :straight t)
   (use-package smart-mode-line
-    :ensure t
+    :straight t
     :init
     (setq sml/no-confirm-load-theme t)
     (setq sml/theme 'powerline)
@@ -222,7 +223,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
 #+BEGIN_SRC emacs-lisp
   (use-package nlinum
-    :ensure t
+    :straight t
 
     :init
     (defun my-add-to-multiple-hooks (function hooks)
@@ -255,20 +256,11 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 	(setq mac-command-modifier 'meta)))
 #+END_SRC
 
-* Dired
-#+BEGIN_SRC emacs-lisp
-  (use-package dired-x
-    :ensure t
-    :after dired
-    :init
-    (add-hook 'dired-mode-hook (lambda () (dired-omit-mode 1))))
-#+END_SRC
-
 * Helm
 ** Helm Core
 #+BEGIN_SRC emacs-lisp
   (use-package helm
-    :ensure t
+    :straight t
 
     :init
     (global-unset-key (kbd "C-x c"))
@@ -304,7 +296,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 ** Helm-GTAGS
 #+BEGIN_SRC emacs-lisp
   (use-package helm-gtags
-    :ensure t
+    :straight t
 
     :init
     (setq helm-gtags-ignore-case t)
@@ -336,7 +328,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 * Projectile
 #+BEGIN_SRC emacs-lisp
   (use-package projectile
-    :ensure t
+    :straight t
     :init
     (setq projectile-completion-system 'helm)
     (add-hook 'c++-mode-hook 'projectile-mode)
@@ -352,7 +344,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 * Magit
 #+BEGIN_SRC emacs-lisp
   (use-package magit
-    :ensure t
+    :straight t
     :defer t
     :bind
     (("C-x g" . magit-status)))
@@ -360,7 +352,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
 #+BEGIN_SRC emacs-lisp
   (use-package magithub
-    :ensure t
+    :straight t
     :defer t
     :after magit
     :config
@@ -370,7 +362,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 * Autocompletion
 #+BEGIN_SRC emacs-lisp
   (use-package company
-    :ensure t
+    :straight t
     :init
     (add-hook 'after-init-hook 'company-mode)
     (setq company-show-numbers t)
@@ -380,15 +372,15 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (global-company-mode))
 
   (use-package company-ycmd
-    :ensure t
+    :straight t
     :after company)
 
   (use-package flycheck-ycmd
-    :ensure t
+    :straight t
     :after ycmd)
 
   (use-package ycmd
-    :ensure t
+    :straight t
     :defer t
     :after company
     :init
@@ -401,12 +393,12 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (global-ycmd-mode))
 
   (use-package company-ycmd
-    :ensure t
+    :straight t
     :init
     (add-hook 'ycmd-mode-hook 'company-ycmd-setup))
 
   (use-package flycheck-ycmd
-    :ensure t
+    :straight t
     :init
     (add-hook 'ycmd-mode-hook 'flycheck-ycmd-setup))
 
@@ -414,40 +406,39 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
 ** Subsidiary packages
 #+BEGIN_SRC emacs-lisp
-  (use-package company-clang
-    :ensure t)
   (use-package company-irony
-    :ensure t)
+    :straight t)
   (use-package company-irony-c-headers
-    :ensure t)
+    :straight t)
   (use-package company-rtags
-    :ensure t)
+    :straight t)
 #+END_SRC
 * Flycheck
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
-    :ensure t
+    :straight t
     :init
     (add-hook 'c++-mode-hook 'flycheck-mode)
     (add-hook 'c-mode-hook 'flycheck-mode))
   (use-package flycheck-rtags
-    :ensure t
+    :straight t
     :after flycheck)
   (use-package flycheck-irony
-    :ensure t
+    :straight t
     :after flycheck)
 #+END_SRC
+
 # * CMake IDE
 # #+BEGIN_SRC emacs-lisp
 #   (use-package rtags
-#     :ensure t
+#     :straight t
 #     :init
 #     (setq rtags-use-helm t)
 #     (rtags-enable-standard-keybindings)
 #     (setq rtags-autostart-diagnostics t)
 #     (setq rtags-completions-enabled t))
 #   (use-package cpputils-cmake
-#     :ensure t
+#     :straight t
 #     :init
 #     (add-hook 'c-mode-common-hook
 #             (lambda ()
@@ -455,7 +446,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #                   (cppcm-reload-all)
 #                 ))))
 #   (use-package cmake-ide
-#     :ensure t
+#     :straight t
 #     :after rtags
 #     :config
 #     (cmake-ide-setup))
@@ -464,21 +455,19 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 ** YASnippet
 #+BEGIN_SRC emacs-lisp
   (use-package yasnippet
-    :ensure t
+    :straight t
     :config
     (yas-global-mode 1))
 
   (use-package yasnippet-snippets
-    :ensure t
+    :straight t
     :after yasnippet)
 #+END_SRC
-
-#+RESULTS:
 
 ** Smartparens
 #+BEGIN_SRC emacs-lisp
   (use-package smartparens
-    :ensure t
+    :straight t
     :config
     (sp-with-modes '(c-mode c++-mode)
 	     (sp-local-pair "{" nil :post-handlers '(("||\n[i]" "RET")))
@@ -492,11 +481,11 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 	  ("M-<up>" . sp-forward-sexp)
 	  ("M-<down>" . sp-backward-sexp)))
 #+END_SRC
-
+   
 ** Firestarter
 #+BEGIN_SRC emacs-lisp
   (use-package firestarter
-    :ensure t
+    :straight t
     :config
     (firestarter-mode))
 #+END_SRC
@@ -504,7 +493,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 ** Which-key
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
-    :ensure t
+    :straight t
     :defer 10
     :config
     (setq which-key-popup-type 'side-window)
@@ -515,7 +504,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 ** Highlight indentation
 #+BEGIN_SRC emacs-lisp
   (use-package highlight-indent-guides
-    :ensure t
+    :straight t
     :init
     (add-hook 'emacs-startup-hook
 	    (lambda ()
@@ -552,7 +541,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 ** Anaconda
 #+BEGIN_SRC emacs-lisp
   ;; (use-package company-anaconda
-  ;;   :ensure t
+  ;;   :straight t
   ;;   :after python
   ;;   :init
   ;;   (add-hook 'python-mode-hook 'anaconda-mode)
@@ -565,7 +554,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 # ** Jedi
 # #+BEGIN_SRC emacs-lisp
 #   (use-package company-jedi
-#     :ensure t
+#     :straight t
 #     :config
 #     (setq jedi:environment-virtualenv (list (expand-file-name "~/.emacs.d/.python-environments/")))
 #     (add-hook 'python-mode-hook 'jedi:setup)
@@ -578,7 +567,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 ** Environments
 #+BEGIN_SRC emacs-lisp
   (use-package conda
-    :ensure t
+    :straight t
     :defer t
     :init
     (setq conda-anaconda-home "/Users/tbrantse/miniconda2")
@@ -598,7 +587,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
 #+BEGIN_SRC emacs-lisp
   (use-package ein
-    :ensure t)
+    :straight t)
 #+END_SRC
 
 #+RESULTS:
@@ -626,8 +615,10 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 
 ** LaTeXMk
 #+BEGIN_SRC emacs-lisp
+  (use-package tex :disabled :straight auctex)
   (use-package auctex-latexmk
-    :ensure t
+    :disabled
+    :straight t
     :init
     (setq auctex-latexmk-inherit-TeX-PDF-mode t)
     :config
@@ -639,14 +630,13 @@ coming soon
 
 * Org
 #+BEGIN_SRC emacs-lisp
-  (use-package org
-    :ensure org-plus-contrib)
+  (use-package org :straight org-plus-contrib)
 #+END_SRC
 
 ** Org-ref
 #+BEGIN_SRC emacs-lisp
   (use-package org-ref
-    :ensure t
+    :straight t
 
     :init
     (setq org-ref-default-bibliography '("/Users/tbrantse/Library/texmf/bibtex/bib/biblio.bib"))
@@ -673,7 +663,7 @@ coming soon
 
 #+BEGIN_SRC emacs-lisp
   (use-package pdf-tools
-    :ensure t
+    :straight t
 
     :init
     (setq doc-view-ghostscript-program "/opt/local/bin/gs")
@@ -686,18 +676,18 @@ coming soon
 #+END_SRC
 ** Org-babel
 #+BEGIN_SRC emacs-lisp
-  (use-package graphviz-dot-mode :ensure t)
+  (use-package graphviz-dot-mode :straight t)
 
   (use-package ob-ipython
-    :ensure t
+    :straight t
     :defer t
     :after org
     :init
     (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
-    (add-to-list 'company-backends 'company-ob-ipython)
+    ;(add-to-list 'company-backends 'company-ob-ipython)
     (add-hook 'python-mode-hook
               '(lambda () (define-key python-mode-map (kbd "C-<tab>") 'ob-ipython-inspect)))
-    (setq ob-ipython-command "ipython")
+    (setq ob-ipython-command "jupyter")
     (defun my-babel-languages ()
       (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
       (org-babel-do-load-languages   
@@ -725,8 +715,11 @@ coming soon
       (org-babel-lob-ingest "~/emacs-init/code_blocks.org"))
     (add-hook 'after-init-hook #'my-library-of-babel-setup)
 
-    (load-file "~/emacs-ext/ox-ipynb/ox-ipynb.el")
-    (require 'ox-ipynb)
+  ;  (load-file "~/emacs-ext/ox-ipynb/ox-ipynb.el")
+                                          ;  (require 'ox-ipynb)
+    (use-package ox-ipynb
+      :straight
+      (:type git :host github :repo "jkitchin/ox-ipynb"))
 
     :bind
     (:map org-mode-map
@@ -734,11 +727,11 @@ coming soon
 #+END_SRC
 
 #+RESULTS:
+: insert-csv-file-as-org-table
 
 ** Org-agenda
 #+BEGIN_SRC emacs-lisp
   (use-package org-agenda
-    :ensure t
 
     :init
     (setq org-agenda-files (list "~/org/todo.org"))
@@ -764,10 +757,12 @@ coming soon
      ("c" . tb-org-agenda-capture)))
 #+END_SRC
 
+#+RESULTS:
+
 * Hydras
 #+BEGIN_SRC emacs-lisp
     (use-package hydra
-      :ensure t
+      :straight t
       :config
       (defhydra tb-system-hydra (:color blue :hint nil)
         "
@@ -891,7 +886,7 @@ coming soon
 * Jabber
 #+BEGIN_SRC emacs-lisp
   (use-package jabber
-    :ensure t
+    :disabled
     :init
     (setq jabber-history-enabled t)
     (setq jabber-use-global-history nil)
