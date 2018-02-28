@@ -457,7 +457,8 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   (use-package yasnippet
     :straight t
     :config
-    (yas-global-mode 1))
+    (yas-global-mode 1)
+    (yas-load-directory (expand-file-name "~/emacs-init/snippets")))
 
   (use-package yasnippet-snippets
     :straight t
