@@ -372,14 +372,17 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     (global-company-mode))
 
   (use-package company-ycmd
+    :disabled
     :straight t
     :after company)
 
   (use-package flycheck-ycmd
+    :disabled
     :straight t
     :after ycmd)
 
   (use-package ycmd
+    :disabled
     :straight t
     :defer t
     :after company
@@ -735,7 +738,7 @@ coming soon
   (use-package org-agenda
 
     :init
-    (setq org-agenda-files (list "~/org/todo.org"))
+    (setq org-agenda-files (list "~/org/"))
     (setq org-log-done 'time)
     (setq org-agenda-include-diary t)
     (setq org-agenda-custom-commands
@@ -750,6 +753,11 @@ coming soon
         (org-capture)
       (let ((org-overriding-default-time (org-get-cursor-date)))
         (org-capture nil "a"))))
+
+    ;; Custom templates
+    (setq org-capture-templates
+          '(("a" "Analysis" entry (file "~/org/analysis.org") "** TODO %?")
+            ("t" "Task" entry (file "~/org/tasks.org") "** TODO %?")))
 
     :bind
     (("C-c l" . org-store-link)
