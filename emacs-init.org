@@ -166,10 +166,9 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
       (server-start)))
 #+END_SRC
 
-* System Paths
+* System Paths 
 #+BEGIN_SRC emacs-lisp
   (use-package exec-path-from-shell
-    :if (memq window-system '(mac ns))
     :straight t
     :config
     (exec-path-from-shell-initialize))
@@ -180,7 +179,6 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   (when (file-exists-p custom-file)
     (load custom-file))
 #+END_SRC
-
 * Look and Feel
 ** Font and theme
 #+BEGIN_SRC emacs-lisp
@@ -461,7 +459,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
     :straight t
     :config
     (yas-global-mode 1)
-    (yas-load-directory (expand-file-name "~/emacs-init/snippets")))
+    (yas-load-directory (expand-file-name "~/.emacs.d/emacsconfig/snippets")))
 
   (use-package yasnippet-snippets
     :straight t
@@ -556,25 +554,28 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   ;;                               (add-to-list 'company-backends 'company-anaconda))))
 #+END_SRC
 # ** Jedi
-# #+BEGIN_SRC emacs-lisp
-#   (use-package company-jedi
-#     :straight t
-#     :config
-#     (setq jedi:environment-virtualenv (list (expand-file-name "~/.emacs.d/.python-environments/")))
-#     (add-hook 'python-mode-hook 'jedi:setup)
-#     (setq jedi:complete-on-dot t)
-#     (setq jedi:use-shortcuts t)
-#     (defun tb/enable-company-jedi ()
-#       (add-to-list 'company-backends 'company-jedi))
-#     (add-hook 'python-mode-hook 'tb/enable-company-jedi))
-# #+END_SRC
+#+BEGIN_SRC emacs-lisp
+  (use-package company-jedi
+    :straight t
+    :config
+    (add-hook 'python-mode-hook 'jedi:setup)
+    (setq jedi:complete-on-dot t)
+    (setq jedi:use-shortcuts t)
+    (defun tb/enable-company-jedi ()
+      (add-to-list 'company-backends 'company-jedi))
+    (add-hook 'python-mode-hook 'tb/enable-company-jedi))
+#+END_SRC
+
+#+RESULTS:
+: t
+
 ** Environments
 #+BEGIN_SRC emacs-lisp
   (use-package conda
     :straight t
     :defer t
     :init
-    (setq conda-anaconda-home "/Users/tbrantse/miniconda2")
+    (setq conda-anaconda-home "~/soft/miniconda2")
     :config
     (conda-env-initialize-interactive-shells)
     (conda-env-initialize-eshell)
@@ -691,7 +692,7 @@ coming soon
     ;(add-to-list 'company-backends 'company-ob-ipython)
     (add-hook 'python-mode-hook
               '(lambda () (define-key python-mode-map (kbd "C-<tab>") 'ob-ipython-inspect)))
-    (setq ob-ipython-command "jupyter")
+    ;(setq ob-ipython-command "jupyter")
     (defun my-babel-languages ()
       (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
       (org-babel-do-load-languages   
@@ -716,7 +717,7 @@ coming soon
 
     (setq org-confirm-babel-evaluate nil)
     (defun my-library-of-babel-setup ()
-      (org-babel-lob-ingest "~/emacs-init/code_blocks.org"))
+      (org-babel-lob-ingest "~/.emacs.d/emacsconfig/code_blocks.org"))
     (add-hook 'after-init-hook #'my-library-of-babel-setup)
 
   ;  (load-file "~/emacs-ext/ox-ipynb/ox-ipynb.el")
@@ -730,43 +731,65 @@ coming soon
           ("C-c f" . insert-csv-file-as-org-table)))
 #+END_SRC
 
-#+RESULTS:
-: insert-csv-file-as-org-table
-
 ** Org-agenda
-#+BEGIN_SRC emacs-lisp
-  (use-package org-agenda
+#+BEGIN_SRC emacs-lisp :tangle yes
+  ;; We want to have several different categories:
+  ;; inbox - everything starts here
+  ;; someday - things without a specific deadline
+  ;; next - one-off tasks that do not belong to projects
+  ;; projects - larger projects
+  (setq org-agenda-files '("~/org/inbox.org"
+                           "~/org/next.org"
+                           "~/org/reminder.org"
+                           "~/org/projects.org"))
+  (setq org-refile-targets `(("~/org/projects.org" :maxlevel . 1)
+                             ("~/org/someday.org" :level . 1)
+                             ("~/org/next.org" :level . 1)
+                             ("~/org/reminder.org" :maxlevel . 1)))
+  (setq org-todo-keywords '((sequence "TODO(t)" "NEXT(n)" "WAITING(w)"
+                                      "|" "DONE(d)" "CANCELLED(c)")))
+  (setq org-todo-keyword-faces '(("TODO" . "red")
+                                 ("NEXT" . "green")
+                                 ("WAITING" . "orange")
+                                 ("DONE" . "dark gray")
+                                 ("CANCELLED" . "black")))
+  (setq org-capture-templates '(("t" "Todo [inbox]" entry
+                                 (file+headline "~/org/inbox.org" "Tasks")
+                                 "* TODO %i%?")
+                                ("r" "Reminder" entry
+                                 (file+headline "~/org/reminder.org" "Reminder")
+                                 "* %i%? \n %U")))
+  (defun org-current-is-todo()
+    (string= "TODO" (org-get-todo-state)))
+  (defun tb-org-skip-all-but-first ()
+    "Skip all in tree but the first entry not marked done."
+    (let (should-skip-entry)
+      (unless (org-current-is-todo)
+        (setq should-skip-entry t))
+      (save-excursion
+        (while (and (not should-skip-entry) (org-goto-sibling t))
+          (when (org-current-is-todo)
+            (setq should-skip-entry t))))
+      (when should-skip-entry
+        (or (outline-next-heading)
+            (goto-char (point-max))))))
 
-    :init
-    (setq org-agenda-files (list "~/org/"))
-    (setq org-log-done 'time)
-    (setq org-agenda-include-diary t)
-    (setq org-agenda-custom-commands
-        '(("c" "Simple agenda view"
-           ((agenda "")
-            (alltodo "")))))
-
-    (defun tb-org-agenda-capture (&optional vanilla)
-    "Capture a task in agenda mode, using the date at point. If VANILLA is non-nil, run the standard `org-capture'."
-    (interactive "P")
-    (if vanilla
-        (org-capture)
-      (let ((org-overriding-default-time (org-get-cursor-date)))
-        (org-capture nil "a"))))
-
-    ;; Custom templates
-    (setq org-capture-templates
-          '(("a" "Analysis" entry (file "~/org/analysis.org") "** TODO %?")
-            ("t" "Task" entry (file "~/org/tasks.org") "** TODO %?")))
-
-    :bind
-    (("C-c l" . org-store-link)
-     ("C-c a" . org-agenda)
-     :map org-agenda-mode-map
-     ("c" . tb-org-agenda-capture)))
+  (setq org-agenda-custom-commands
+        '(("d" "Dashboards" tags-todo "@dashboard"
+           ((org-agenda-overriding-header "Dashboards")
+            (org-agenda-skip-function #'tb-org-skip-all-but-first)))
+          ("n" "Next"
+           ((todo "NEXT")
+            (agenda "")))
+          ("l" "Lists" tags-todo "@list"
+           ((org-agenda-overriding-header "Lists")
+            (org-agenda-skip-function #'tb-org-skip-all-but-first)))))
+  (bind-key "C-c c" 'org-capture)
+  (bind-key "C-c a" 'org-agenda)
 #+END_SRC
 
 #+RESULTS:
+: org-agenda
 
 * Hydras
 #+BEGIN_SRC emacs-lisp
@@ -888,7 +911,7 @@ coming soon
      ("C-c e" . tb-info-hydra/body)
      ("C-c f" . tb-grep-hydra/body)
      ("C-c u" . tb-utility-hydra/body)
-     ("C-c c" . tb-config-hydra/body)
+     ("C-c z" . tb-config-hydra/body)
      ("C-c o" . hydra-outline/body)))
 #+END_SRC
 
@@ -914,12 +937,12 @@ coming soon
      "'\C-e ',\C-n\C-a")
   (global-set-key (kbd "C-c q") 'query_to_gs)
 #+END_SRC
+
 * Final setup
 #+BEGIN_SRC emacs-lisp
-(load-file "~/emacs-init/secret.el")
-(appt-activate)
-(display-time)
-(visual-line-mode)
+  (appt-activate)
+  (display-time)
+  (global-visual-line-mode 1)
 #+END_SRC
 
 * End
@@ -930,8 +953,7 @@ So, we're done. The last thing we have to do is let the main =.emacs= know we ha
 #+END_SRC
 And that's it! Every time you save this file, it will automatically create and compile =emacs-init.el=, and =.emacs= will load the configuration from that file on startup.
 
-# Local Variables:
-# eval: (add-hook 'after-save-hook (lambda () (org-babel-tangle) (byte-compile-file "emacs-init.el")) nil t)
-# End:
 
-# emacs-init.org ends here
+# Local Variables:
+# eval: (add-hook (quote after-save-hook) (lambda nil (org-babel-tangle) (byte-compile-file (concat user-emacs-directory "emacsconfig/emacs-init.el"))) nil t)
+# End:
