@@ -37,7 +37,7 @@ This section is intended to get you up and running.
 
 ** Installation
 *** Installing Emacs
-This config has been tested to work with Emacs 24 (MacPorts and Emacs.app), the Emacs 24 =emacs-mac-app=, and Emacs 25.0 and 25.1. Pick your poison:
+This config has been tested to work with Emacs 24 (MacPorts and Emacs.app), the Emacs 24 =emacs-mac-app=, and Emacs 25.0 and 25.1 built from source, in addition to Emacs 26.1 built from source on Xubuntu. Pick your poison:
 **** Mac
 - I believe the vanilla build from MacPorts has a few differences from the main source line, but I'm not sure what they are. To get vanilla Emacs from MacPorts, type
 #+BEGIN_SRC sh :tangle no
@@ -97,7 +97,10 @@ But what about after? This file contains a bit of file-local code at the end, na
 This lambda function, saved at the very end of the file as an "eval" will cause this file to regenerate and byte-compile the file =emacs-init.el= every time you save this file, ensuring that any changes are automatically ready to go next time you start Emacs. Handy!
 
 *** Straight and Use-Package
-Okay, the other thing is to have use-package so we can keep things as orderly as possible. This code block will automatically install =use-package= if not installed, so that it's available for the rest of this config.
+Okay, the other thing is to have use-package so we can keep things as orderly as possible. This code block will automatically install =use-package= if not installed, so that it's available for the rest of this config. =use-package= has the additional benefit that we don't need to specify a list of packages to install - the =use-package= call will automatically download and install packages we ask for if they aren't installed. Finally, =use-package= also waits to install packages until they are actually needed, so it can massively speed up the startup time of Emacs, especially for large or complex configs.
+
+In addition, we use the package manager =straight.el= instead of the default =package.el=. =straight.el= prefers to use github repos - this is principally useful for org-mode, since the version of org that ships with emacs is outdated.
+
 #+BEGIN_SRC emacs-lisp
   (let ((bootstrap-file (concat user-emacs-directory "straight/repos/straight.el/bootstrap.el"))
         (bootstrap-version 3))
@@ -115,6 +118,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+END_SRC
 
 * Startup
+We set the scratch screen message to be a little more useful.
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-screen t)
   (setq initial-scratch-message
@@ -128,18 +132,17 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
       ";; C-x f: Create file\n"
       ";; C-c u: Desk utilities menu\n"
       ";; C-c p p: Jump to project\n"
-      ";; C-c c: Emacs config menu\n\n"))
+      ";; C-c z: Emacs config menu\n\n"))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-  (use-package cl :straight t)
-#+END_SRC
+Get our name and email address set correctly.
 
 #+BEGIN_SRC emacs-lisp
   (setq user-full-name "Thomas Brantseg")
   (setq user-email-address "tom.brantseg@gmail.com")
 #+END_SRC
 
+Set our auto-save and backup files to be in one centralized location to avoid cluttering up working directories.
 #+BEGIN_SRC emacs-lisp
   (let ((backup-dir "~/.emacs.d/backups")
 	(auto-saves-dir "~/.emacs.d/auto-saves"))
@@ -167,6 +170,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
 #+END_SRC
 
 * System Paths 
+Make sure that the =$PATH= we have set here matches that of the shell.
 #+BEGIN_SRC emacs-lisp
   (use-package exec-path-from-shell
     :straight t
@@ -179,6 +183,7 @@ Okay, the other thing is to have use-package so we can keep things as orderly as
   (when (file-exists-p custom-file)
     (load custom-file))
 #+END_SRC
+
 * Look and Feel
 ** Font and theme
 #+BEGIN_SRC emacs-lisp
@@ -867,9 +872,9 @@ coming soon
     _p_: List packages
     _g_: Customize group
     "
-    ("c" (find-file "~/emacs-init/emacs-init.org"))
+    ("c" (find-file (concat user-emacs-directory "emacsconfig/emacs-init.org")))
     ("e" (find-file "~/.emacs"))
-    ("r" (load-file "~/emacs-init/emacs-init.el"))
+    ("r" (load-file (concat user-emacs-directory "emacsconfig/emacs-init.el")))
     ("p" package-list-packages)
     ("g" customize-group))
 
