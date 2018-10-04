@@ -773,7 +773,7 @@ coming soon
       (when should-skip-entry
         (or (outline-next-heading)
             (goto-char (point-max))))))
-
+  ;; TODO Prompt for new NEXT item in project after marking something done
   (setq org-agenda-custom-commands
         '(("d" "Dashboards" tags-todo "@dashboard"
            ((org-agenda-overriding-header "Dashboards")
