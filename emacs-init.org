@@ -955,6 +955,7 @@ coming soon
 
 * Final setup
 #+BEGIN_SRC emacs-lisp
+  (yas/load-directory (concat user-emacs-directory "emacsconfig/snippets"))
   (appt-activate)
   (display-time)
   (global-visual-line-mode 1)
