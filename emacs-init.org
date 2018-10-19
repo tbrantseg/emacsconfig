@@ -558,21 +558,6 @@ Make sure that the =$PATH= we have set here matches that of the shell.
   ;;                               (make-local-variable 'company-backends)
   ;;                               (add-to-list 'company-backends 'company-anaconda))))
 #+END_SRC
-# ** Jedi
-#+BEGIN_SRC emacs-lisp
-  (use-package company-jedi
-    :straight t
-    :config
-    (add-hook 'python-mode-hook 'jedi:setup)
-    (setq jedi:complete-on-dot t)
-    (setq jedi:use-shortcuts t)
-    (defun tb/enable-company-jedi ()
-      (add-to-list 'company-backends 'company-jedi))
-    (add-hook 'python-mode-hook 'tb/enable-company-jedi))
-#+END_SRC
-
-#+RESULTS:
-: t
 
 ** Environments
 #+BEGIN_SRC emacs-lisp
@@ -694,10 +679,35 @@ coming soon
     :after org
     :init
     (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
-    ;(add-to-list 'company-backends 'company-ob-ipython)
     (add-hook 'python-mode-hook
               '(lambda () (define-key python-mode-map (kbd "C-<tab>") 'ob-ipython-inspect)))
-    ;(setq ob-ipython-command "jupyter")
+  
+    (advice-add 'ob-ipython-auto-configure-kernels :around
+                (lambda (orig-fun &rest args)
+                  "Configure kernels when jupyter is found"
+                  (when (executable-find ob-ipython-command)
+                    (apply orig-fun args))))
+  
+    (defun run-python-first (&rest args)
+      "Start inferior python if it isn't running."
+      (or (comint-check-proc "*Python*") (run-python)))
+  
+    (advice-add 'org-babel-execute:ipython :after
+                (lambda (body params)
+                  "Send body to the inferior python process."
+                  (run-python-first)
+                  (python-shell-send-string body)))
+    (add-hook 'org-mode-hook
+              (lambda ()
+                (setq-local completion-at-point-functions
+                            '(pcomplete-completions-at-point python-completion-at-point))))
+    (defun ob-ipython-eldoc-function ()
+           (when (org-babel-where-is-src-block-head)
+             (python-eldoc-function)))
+    (add-hook 'org-mode-hook
+              (lambda ()
+                (setq-default eldoc-documentation-function 'ob-ipython-eldoc-function)))
+    (setq ob-ipython-command "jupyter")
     (defun my-babel-languages ()
       (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
       (org-babel-do-load-languages   
