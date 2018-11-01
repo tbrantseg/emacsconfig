@@ -544,7 +544,7 @@ Make sure that the =$PATH= we have set here matches that of the shell.
  
   (setq compilation-scroll-output 1)
 #+END_SRC
-* Python
+* Python 
 ** Anaconda
 #+BEGIN_SRC emacs-lisp
   ;; (use-package company-anaconda
@@ -561,23 +561,20 @@ Make sure that the =$PATH= we have set here matches that of the shell.
 
 ** Environments
 #+BEGIN_SRC emacs-lisp
-  (use-package conda
+  (use-package pyvenv
     :straight t
-    :defer t
     :init
-    (setq conda-anaconda-home "~/soft/miniconda2")
-    :config
-    (conda-env-initialize-interactive-shells)
-    (conda-env-initialize-eshell)
-    (add-hook 'python-mode-hook 'conda-env-autoactivate-mode))
+    (setenv "WORKON_HOME" "/home/tom/soft/miniconda3/envs")
+    (pyvenv-mode 1)
+    (pyvenv-tracking-mode 1))
 #+END_SRC
 
 ** IPython
 #+BEGIN_SRC emacs-lisp
-(setq python-shell-interpreter "ipython")
-(setq python-shell-interpreter-args "--simple-prompt -i")
-(setq python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
-(setq python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: ")
+   (setq python-shell-interpreter "ipython3")
+   (setq python-shell-interpreter-args "--simple-prompt -i")
+   (setq python-shell-prompt-regexp "In \\[[0-9]+\\]: ")
+   (setq python-shell-prompt-output-regexp "Out\\[[0-9]+\\]: ")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -595,7 +592,7 @@ Make sure that the =$PATH= we have set here matches that of the shell.
 (setq py-split-windows-on-execute-p nil)
 (setq py-smart-indentation t)
 #+END_SRC
-   
+  
 * LaTeX
 ** Hooks
 #+BEGIN_SRC emacs-lisp
@@ -625,9 +622,25 @@ coming soon
 
 * Org
 #+BEGIN_SRC emacs-lisp
+  (use-package graphviz-dot-mode :straight t)
   (use-package org :straight org-plus-contrib)
+  (use-package ob-ipython
+    :straight t)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((python . t)
+     (ipython . t)
+     (shell . t)))
+  (setq org-src-fontify-natively t)
+  (setq org-confirm-babel-evaluate nil)
+  (add-hook 'python-mode-hook
+            '(lambda () (define-key python-mode-map (kbd "C-<tab>")
+                          'ob-ipython-inspect)))
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (setq-local completion-at-point-functions
+                          '(pcomplete-completions-at-point python-completion-at-point))))
 #+END_SRC
-
 ** Org-ref
 #+BEGIN_SRC emacs-lisp
   (use-package org-ref
@@ -669,83 +682,6 @@ coming soon
     :config
     (pdf-tools-install))
 #+END_SRC
-** Org-babel
-#+BEGIN_SRC emacs-lisp
-  (use-package graphviz-dot-mode :straight t)
-
-  (use-package ob-ipython
-    :straight t
-    :defer t
-    :after org
-    :init
-    (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
-    (add-hook 'python-mode-hook
-              '(lambda () (define-key python-mode-map (kbd "C-<tab>") 'ob-ipython-inspect)))
-  
-    (advice-add 'ob-ipython-auto-configure-kernels :around
-                (lambda (orig-fun &rest args)
-                  "Configure kernels when jupyter is found"
-                  (when (executable-find ob-ipython-command)
-                    (apply orig-fun args))))
-  
-    (defun run-python-first (&rest args)
-      "Start inferior python if it isn't running."
-      (or (comint-check-proc "*Python*") (run-python)))
-  
-    (advice-add 'org-babel-execute:ipython :after
-                (lambda (body params)
-                  "Send body to the inferior python process."
-                  (run-python-first)
-                  (python-shell-send-string body)))
-    (add-hook 'org-mode-hook
-              (lambda ()
-                (setq-local completion-at-point-functions
-                            '(pcomplete-completions-at-point python-completion-at-point))))
-    (defun ob-ipython-eldoc-function ()
-           (when (org-babel-where-is-src-block-head)
-             (python-eldoc-function)))
-    (add-hook 'org-mode-hook
-              (lambda ()
-                (setq-default eldoc-documentation-function 'ob-ipython-eldoc-function)))
-    (setq ob-ipython-command "jupyter")
-    (defun my-babel-languages ()
-      (add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
-      (org-babel-do-load-languages   
-       'org-babel-load-languages
-       '((dot . t)
-         (emacs-lisp t)
-         (ditaa . t)
-         (python . t)
-         (ipython . t)
-         (shell . t)
-         (gnuplot . t)
-         (plantuml . t)
-         (python . t))))
-    (add-hook 'org-mode-hook 'my-babel-languages)
-
-    (defun insert-csv-file-as-org-table (filename)
-      "Insert a file into the current buffer at point, and convert it to an org table."
-      (interactive (list (read-file-name "csv file: ")))
-      (let* ((start (point))
-             (end (+ start (nth 1 (insert-file-contents filename)))))
-        (org-table-convert-region start end)))
-
-    (setq org-confirm-babel-evaluate nil)
-    (defun my-library-of-babel-setup ()
-      (org-babel-lob-ingest "~/.emacs.d/emacsconfig/code_blocks.org"))
-    (add-hook 'after-init-hook #'my-library-of-babel-setup)
-
-  ;  (load-file "~/emacs-ext/ox-ipynb/ox-ipynb.el")
-                                          ;  (require 'ox-ipynb)
-    (use-package ox-ipynb
-      :straight
-      (:type git :host github :repo "jkitchin/ox-ipynb"))
-
-    :bind
-    (:map org-mode-map
-          ("C-c f" . insert-csv-file-as-org-table)))
-#+END_SRC
-
 ** Org-agenda
 #+BEGIN_SRC emacs-lisp :tangle yes
   ;; We want to have several different categories:
@@ -955,7 +891,7 @@ coming soon
 
 * Final setup
 #+BEGIN_SRC emacs-lisp
-  (yas/load-directory (concat user-emacs-directory "emacsconfig/snippets"))
+  (yas-load-directory (concat user-emacs-directory "emacsconfig/snippets"))
   (appt-activate)
   (display-time)
   (global-visual-line-mode 1)
